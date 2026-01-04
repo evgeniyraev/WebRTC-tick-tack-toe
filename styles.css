@@ -5,7 +5,8 @@
   color: #e2e8f0;
   --card-bg: rgba(15, 23, 42, 0.8);
   --accent: #38bdf8;
-  --accent-dim: rgba(56, 189, 248, 0.3);
+  --accent-alt: #6366f1;
+  --accent-soft: rgba(56, 189, 248, 0.25);
   --success: #34d399;
   --danger: #fb7185;
 }
@@ -36,44 +37,92 @@ header h1 {
   font-size: clamp(2rem, 4vw, 3rem);
 }
 
-.instructions {
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.step {
+  display: none;
   background: var(--card-bg);
   border-radius: 1rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid rgba(226, 232, 240, 0.08);
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.5);
+}
+
+.step.active {
+  display: block;
+}
+
+.step-header {
+  margin-bottom: 1.25rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.7);
+}
+
+.step h2 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+}
+
+.step-header p {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.role-card {
+  background: rgba(15, 23, 42, 0.5);
   border: 1px solid rgba(226, 232, 240, 0.1);
+  border-radius: 1rem;
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.instructions ol {
-  margin-left: 1.25rem;
+.role-card ul {
+  padding-left: 1.25rem;
+  margin: 0;
+  color: rgba(226, 232, 240, 0.9);
 }
 
-.instructions li + li {
-  margin-top: 0.8rem;
-}
-
-.instructions .note {
-  margin-top: 1rem;
-  color: rgba(226, 232, 240, 0.8);
+.role-note {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px dashed rgba(226, 232, 240, 0.2);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
 }
 
 .connection {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.25rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .card {
-  background: var(--card-bg);
+  background: rgba(15, 23, 42, 0.6);
   border-radius: 1rem;
   padding: 1rem;
   border: 1px solid rgba(226, 232, 240, 0.08);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.4);
 }
 
 .card h3 {
@@ -94,26 +143,36 @@ textarea {
 
 button {
   border: none;
-  padding: 0.65rem 1rem;
   border-radius: 999px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  background: linear-gradient(120deg, var(--accent), #6366f1);
-  color: #0f172a;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 25px rgba(56, 189, 248, 0.3);
-}
-
 button:disabled {
-  opacity: 0.4;
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+button.primary {
+  padding: 0.65rem 1.2rem;
+  background: linear-gradient(120deg, var(--accent), var(--accent-alt));
+  color: #0f172a;
+}
+
+button.ghost {
+  padding: 0.6rem 1.1rem;
+  background: rgba(226, 232, 240, 0.08);
+  color: inherit;
+  border: 1px solid rgba(226, 232, 240, 0.2);
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(56, 189, 248, 0.3);
 }
 
 .button-row {
@@ -149,16 +208,25 @@ button:disabled {
   max-height: 160px;
 }
 
+.note {
+  margin: 0.25rem 0 0.75rem;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.wizard-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .game {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.5rem;
   align-items: start;
-  margin-bottom: 2rem;
 }
 
 .game-info {
-  background: var(--card-bg);
+  background: rgba(15, 23, 42, 0.6);
   padding: 1rem;
   border-radius: 1rem;
   border: 1px solid rgba(226, 232, 240, 0.08);
@@ -168,8 +236,10 @@ button:disabled {
   gap: 0.75rem;
 }
 
-#resetGame {
-  background: linear-gradient(120deg, #f472b6, #fb923c);
+.game-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .board {
@@ -205,6 +275,10 @@ button:disabled {
   border-color: rgba(226, 232, 240, 0.3);
 }
 
+.hidden {
+  display: none !important;
+}
+
 footer {
   text-align: center;
   color: rgba(226, 232, 240, 0.6);
@@ -221,5 +295,9 @@ footer {
     background: radial-gradient(circle at top, rgba(14, 165, 233, 0.1), transparent 40%),
       radial-gradient(circle at bottom, rgba(52, 211, 153, 0.15), transparent 50%),
       #f1f5f9;
+  }
+
+  button.ghost {
+    border-color: rgba(15, 23, 42, 0.2);
   }
 }

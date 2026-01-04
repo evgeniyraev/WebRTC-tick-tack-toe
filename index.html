@@ -9,57 +9,102 @@
 <body>
   <header>
     <h1>WebRTC Tic-Tac-Toe</h1>
-    <p>Play a peer-to-peer game of tic-tac-toe using WebRTC data channels. No server is required beyond exchanging the connection text.</p>
+    <p>A tiny wizard helps you host or join a peer-to-peer match using WebRTC data channels. No servers — just exchange the generated text.</p>
   </header>
 
   <main>
-    <section class="instructions">
-      <h2>How to connect</h2>
-      <ol>
-        <li>Player A clicks <em>Create Offer</em> and shares the generated text with Player B.</li>
-        <li>Player B pastes the offer into the <em>Remote SDP</em> area and clicks <em>Answer &amp; Connect</em>. They share the generated answer back.</li>
-        <li>Player A pastes the answer and clicks <em>Finalize Connection</em>. Once the status turns green, the board becomes live.</li>
-      </ol>
-      <p class="note">Tip: send the text through chat, email, or QR. It expires when the page reloads.</p>
+    <section class="step active" data-step="1">
+      <div class="step-header">
+        <p class="eyebrow">Step 1</p>
+        <h2>How do you want to play?</h2>
+        <p>Invite someone and send them your offer, or paste an offer you already received.</p>
+      </div>
+      <div class="role-grid">
+        <article class="role-card">
+          <h3>Invite a friend</h3>
+          <p>You will host the match, create an offer, send it to your friend, and wait for their answer.</p>
+          <ul>
+            <li>You start first as <strong>X</strong>.</li>
+            <li>The game unlocks after your friend replies.</li>
+          </ul>
+          <button class="primary" data-role-select="host">Host &amp; create offer</button>
+        </article>
+        <article class="role-card">
+          <h3>Accept an invite</h3>
+          <p>Paste the host's offer, generate an answer, and send it back to lock in the connection.</p>
+          <ul>
+            <li>You play as <strong>O</strong>.</li>
+            <li>You'll see the board once the channel opens.</li>
+          </ul>
+          <button class="primary" data-role-select="guest">Join &amp; answer offer</button>
+        </article>
+      </div>
     </section>
 
-    <section class="connection">
-      <div class="card">
-        <h3>Step 1 · Share your SDP</h3>
-        <button id="createOffer">Create Offer</button>
-        <textarea id="localSdp" readonly placeholder="Your offer or answer will show up here. Share it with your opponent."></textarea>
-        <button id="copyLocal">Copy Text</button>
+    <section class="step" data-step="2">
+      <div class="step-header">
+        <p class="eyebrow">Step 2</p>
+        <h2 id="connectionTitle">Connection setup</h2>
+        <p id="connectionSummary">Choose a role to see detailed instructions.</p>
       </div>
-
-      <div class="card">
-        <h3>Step 2 · Paste opponent SDP</h3>
-        <textarea id="remoteSdp" placeholder="Paste the text you received from the other player here."></textarea>
-        <div class="button-row">
-          <button id="answerConnect">Answer &amp; Connect</button>
-          <button id="finalizeConnection">Finalize Connection</button>
+      <div class="role-note" data-role-visible="host">
+        <strong>Host flow:</strong> Create an offer, copy the generated text, send it to your friend, then paste their answer below and finalize the connection.
+      </div>
+      <div class="role-note" data-role-visible="guest">
+        <strong>Guest flow:</strong> Paste the host offer, click “Answer &amp; Connect”, share the generated answer back, and wait for the host to finalize.
+      </div>
+      <section class="connection">
+        <div class="card">
+          <h3>Share your SDP</h3>
+          <button id="createOffer" class="primary" data-role-visible="host">Create Offer</button>
+          <textarea id="localSdp" readonly placeholder="Choose a role to begin."></textarea>
+          <button id="copyLocal" class="ghost">Copy text</button>
         </div>
-      </div>
 
-      <div class="card status-card">
-        <h3>Connection status</h3>
-        <p id="statusText">Waiting for action…</p>
-        <pre id="log"></pre>
+        <div class="card">
+          <h3>Paste their SDP</h3>
+          <textarea id="remoteSdp" placeholder="Choose a role to begin."></textarea>
+          <div class="button-row">
+            <button id="answerConnect" class="primary" data-role-visible="guest">Answer &amp; Connect</button>
+            <button id="finalizeConnection" class="primary" data-role-visible="host">Finalize Connection</button>
+          </div>
+        </div>
+
+        <div class="card status-card">
+          <h3>Connection status</h3>
+          <p id="statusText">Waiting for action…</p>
+          <pre id="log"></pre>
+        </div>
+      </section>
+      <p class="note">When the data channel opens, we will switch to Step 3 automatically so you can start the match.</p>
+      <div class="wizard-actions">
+        <button id="backToRole" class="ghost">Back to role selection</button>
       </div>
     </section>
 
-    <section class="game">
-      <div class="game-info">
-        <p><strong>You play as:</strong> <span id="playerSymbol">–</span></p>
-        <p><strong>Turn:</strong> <span id="turnIndicator">–</span></p>
-        <p><strong>Result:</strong> <span id="result">Game not started</span></p>
-        <button id="resetGame">Reset board</button>
+    <section class="step" data-step="3">
+      <div class="step-header">
+        <p class="eyebrow">Step 3</p>
+        <h2>Game on</h2>
+        <p>Take turns placing your marks. Moves stay synchronized through the data channel.</p>
       </div>
-      <div class="board" id="board"></div>
+      <section class="game">
+        <div class="game-info">
+          <p><strong>You play as:</strong> <span id="playerSymbol">–</span></p>
+          <p><strong>Turn:</strong> <span id="turnIndicator">–</span></p>
+          <p><strong>Result:</strong> <span id="result">Game not started</span></p>
+          <div class="game-actions">
+            <button id="resetGame" class="primary">Reset board</button>
+            <button id="endSession" class="ghost">End session</button>
+          </div>
+        </div>
+        <div class="board" id="board"></div>
+      </section>
     </section>
   </main>
 
   <footer>
-    <p>Built for GitHub Pages. All game data stays between your browsers.</p>
+    <p>All data stays in your browsers. Refresh either side to start a brand new match.</p>
   </footer>
 
   <script src="app.js" type="module"></script>

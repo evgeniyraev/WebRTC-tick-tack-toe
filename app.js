@@ -19,6 +19,33 @@ const turnIndicatorEl = document.getElementById('turnIndicator');
 const resultEl = document.getElementById('result');
 const resetGameBtn = document.getElementById('resetGame');
 const boardEl = document.getElementById('board');
+const backToRoleBtn = document.getElementById('backToRole');
+const endSessionBtn = document.getElementById('endSession');
+const roleButtons = document.querySelectorAll('[data-role-select]');
+const steps = document.querySelectorAll('[data-step]');
+const roleViews = document.querySelectorAll('[data-role-visible]');
+const connectionTitle = document.getElementById('connectionTitle');
+const connectionSummary = document.getElementById('connectionSummary');
+
+const wizardState = {
+  role: null,
+  step: 1,
+};
+
+const roleCopy = {
+  host: {
+    title: 'Invite a friend',
+    summary: 'Create an offer, send it to your friend, then paste their answer to finalize the WebRTC connection.',
+    localPlaceholder: 'Click “Create Offer” to generate the SDP blob to share.',
+    remotePlaceholder: 'Paste the answer you received and click “Finalize Connection”.',
+  },
+  guest: {
+    title: 'Accept an invite',
+    summary: 'Paste the host offer, generate an answer, send it back, and wait for them to finalize.',
+    localPlaceholder: 'After you click “Answer & Connect”, your answer appears here to share back.',
+    remotePlaceholder: 'Paste the offer text sent by the host before answering.',
+  },
+};
 
 const gameState = {
   board: Array(9).fill(null),
@@ -44,12 +71,104 @@ function log(message) {
   logEl.textContent = `[${timestamp}] ${message}\n` + logEl.textContent.slice(0, 1500);
 }
 
+function clearLog() {
+  logEl.textContent = '';
+}
+
 function setStatus(text, variant = '') {
   statusText.textContent = text;
   statusText.classList.remove('ready', 'error');
   if (variant) {
     statusText.classList.add(variant);
   }
+}
+
+function goToStep(step) {
+  wizardState.step = step;
+  steps.forEach((section) => {
+    const sectionStep = Number(section.dataset.step);
+    section.classList.toggle('active', sectionStep === step);
+  });
+}
+
+function toggleRoleViews(role) {
+  roleViews.forEach((element) => {
+    const visibleFor = element.dataset.roleVisible;
+    if (!visibleFor) {
+      return;
+    }
+    element.classList.toggle('hidden', role !== visibleFor);
+  });
+}
+
+function configureRoleCopy(role) {
+  if (!role || !roleCopy[role]) {
+    connectionTitle.textContent = 'Connection setup';
+    connectionSummary.textContent = 'Choose “Invite a friend” or “Accept an invite” to see step-by-step directions.';
+    localSdpEl.placeholder = 'Choose a role to begin.';
+    remoteSdpEl.placeholder = 'Choose a role to begin.';
+    return;
+  }
+  connectionTitle.textContent = roleCopy[role].title;
+  connectionSummary.textContent = roleCopy[role].summary;
+  localSdpEl.placeholder = roleCopy[role].localPlaceholder;
+  remoteSdpEl.placeholder = roleCopy[role].remotePlaceholder;
+}
+
+function selectRole(role) {
+  wizardState.role = role;
+  isOfferer = role === 'host';
+  toggleRoleViews(role);
+  configureRoleCopy(role);
+  gameState.playerSymbol = role === 'host' ? 'X' : 'O';
+  updatePlayerSymbol();
+  localSdpEl.value = '';
+  remoteSdpEl.value = '';
+  clearLog();
+  resetGame(false);
+  setStatus(
+    role === 'host'
+      ? 'Click “Create Offer” to generate your invite.'
+      : 'Paste the host offer and click “Answer & Connect”.'
+  );
+  goToStep(2);
+}
+
+function returnToRoleSelection() {
+  wizardState.role = null;
+  isOfferer = false;
+  toggleRoleViews(null);
+  configureRoleCopy(null);
+  clearLog();
+  localSdpEl.value = '';
+  remoteSdpEl.value = '';
+  setStatus('Waiting for action…');
+  gameState.playerSymbol = null;
+  updatePlayerSymbol();
+  resetGame(false);
+  if (pc) {
+    try {
+      pc.close();
+    } catch (error) {
+      console.error(error);
+    }
+    pc = null;
+  }
+  teardownDataChannel();
+  goToStep(1);
+}
+
+function ensureRole(requiredRole) {
+  if (wizardState.role !== requiredRole) {
+    setStatus(
+      requiredRole === 'host'
+        ? 'Choose “Invite a friend” first.'
+        : 'Choose “Accept an invite” first.',
+      'error'
+    );
+    return false;
+  }
+  return true;
 }
 
 function resetPeerConnection({ createDataChannel = false } = {}) {
@@ -71,6 +190,7 @@ function resetPeerConnection({ createDataChannel = false } = {}) {
     if (pc.connectionState === 'failed') {
       setStatus('Connection failed. Try resetting and starting again.', 'error');
       teardownDataChannel();
+      goToStep(2);
     }
   };
   pc.onicecandidate = (event) => {
@@ -100,11 +220,17 @@ function attachDataChannel(channel) {
     setStatus('Connected! Start playing.', 'ready');
     updatePlayerSymbol();
     sendSyncState();
+    if (wizardState.step !== 3) {
+      goToStep(3);
+    }
   };
   dataChannel.onclose = () => {
     log('Data channel closed');
     setStatus('Connection closed', 'error');
     gameState.connected = false;
+    if (wizardState.role) {
+      goToStep(2);
+    }
   };
   dataChannel.onerror = (event) => {
     console.error(event);
@@ -133,6 +259,9 @@ function teardownDataChannel() {
 }
 
 async function createOffer() {
+  if (!ensureRole('host')) {
+    return;
+  }
   isOfferer = true;
   resetPeerConnection({ createDataChannel: true });
   remoteSdpEl.value = '';
@@ -154,6 +283,9 @@ async function createOffer() {
 }
 
 async function answerAndConnect() {
+  if (!ensureRole('guest')) {
+    return;
+  }
   const remoteDescription = remoteSdpEl.value.trim();
   if (!remoteDescription) {
     setStatus('Paste the remote offer first.', 'error');
@@ -182,6 +314,9 @@ async function answerAndConnect() {
 }
 
 async function finalizeConnection() {
+  if (!ensureRole('host')) {
+    return;
+  }
   const remoteDescription = remoteSdpEl.value.trim();
   if (!remoteDescription) {
     setStatus('Paste the answer before finalizing.', 'error');
@@ -213,13 +348,16 @@ function updateBoardUI() {
     cell.textContent = gameState.board[i] ?? '';
     cell.classList.toggle('filled', Boolean(gameState.board[i]));
   }
-  turnIndicatorEl.textContent = gameState.winner ? '-' : gameState.currentTurn;
+  const isActive = gameState.connected && !gameState.winner;
+  turnIndicatorEl.textContent = isActive ? gameState.currentTurn : '–';
   if (gameState.winner) {
     resultEl.textContent = `${gameState.winner} wins!`;
-  } else if (!gameState.board.includes(null)) {
+  } else if (!gameState.board.includes(null) && gameState.connected) {
     resultEl.textContent = 'Draw!';
+  } else if (!gameState.connected) {
+    resultEl.textContent = wizardState.role ? 'Waiting for connection' : 'Game not started';
   } else {
-    resultEl.textContent = gameState.connected ? 'Game in progress' : 'Waiting for connection';
+    resultEl.textContent = 'Game in progress';
   }
 }
 
@@ -251,7 +389,7 @@ function playMove(index, symbol, isLocal) {
   if (winner) {
     gameState.winner = winner;
   }
-  if (!gameState.board.includes(null) && !winner) {
+  if (!gameState.board.includes(null) && !winner && gameState.connected) {
     resultEl.textContent = 'Draw!';
   }
   updateBoardUI();
@@ -340,6 +478,8 @@ function initBoard() {
 
 initBoard();
 resetGame(false);
+configureRoleCopy(null);
+toggleRoleViews(null);
 
 resetGameBtn.addEventListener('click', () => resetGame(true));
 createOfferBtn.addEventListener('click', () => createOffer());
@@ -356,6 +496,14 @@ copyLocalBtn.addEventListener('click', async () => {
     log('Clipboard copy failed');
   }
 });
+roleButtons.forEach((button) => {
+  button.addEventListener('click', () => selectRole(button.dataset.roleSelect));
+});
+backToRoleBtn.addEventListener('click', () => returnToRoleSelection());
+endSessionBtn.addEventListener('click', () => returnToRoleSelection());
+
+goToStep(1);
+setStatus('Waiting for action…');
 
 async function waitForIceGathering(connection) {
   if (connection.iceGatheringState === 'complete') {

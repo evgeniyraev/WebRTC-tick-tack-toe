@@ -8,15 +8,16 @@ A static, GitHub Pages-ready WebRTC experiment that lets two people play tic-tac
 - WebRTC peer-to-peer connection using a data channel for instant move syncing
 - Manual signaling flow so you do not need to run a signaling server
 - Responsive, modern UI with clipboard helpers and live connection logs
+- Three-step wizard that guides each player (host or guest) through the exact actions they need
 
 ## Getting started
 
 1. Clone or download this repo.
 2. Serve the files locally (for example `python3 -m http.server`) or just open `index.html` in a browser.
-3. Follow the in-app instructions to exchange the SDP text with your opponent:
-   - Player A clicks **Create Offer** and shares the text that appears under “Share your SDP”.
-   - Player B pastes that offer into “Remote SDP” and clicks **Answer & Connect**, then sends the generated answer back.
-   - Player A pastes the answer and clicks **Finalize Connection**. When the status shows “Connected”, start playing.
+3. Use the built-in wizard:
+   - Step 1: Pick **Invite a friend** if you are hosting (you will be player X) or **Accept an invite** if you already received an offer (you will be player O).
+   - Step 2: Follow the role-specific prompts to exchange the SDP blobs (host creates and sends an offer, guest pastes it, generates an answer, and sends it back, host finalizes).
+   - Step 3: The wizard switches to the game board once the WebRTC data channel opens, keeping both boards in sync.
 
 The SDP blobs can be sent via chat, email, QR code, etc. A new pair of blobs is needed for each new match or if either player refreshes the page.
 
