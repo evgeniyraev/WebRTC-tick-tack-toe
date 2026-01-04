@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebRTC Tic-Tac-Toe</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>WebRTC Tic-Tac-Toe</h1>
+    <p>Play a peer-to-peer game of tic-tac-toe using WebRTC data channels. No server is required beyond exchanging the connection text.</p>
+  </header>
+
+  <main>
+    <section class="instructions">
+      <h2>How to connect</h2>
+      <ol>
+        <li>Player A clicks <em>Create Offer</em> and shares the generated text with Player B.</li>
+        <li>Player B pastes the offer into the <em>Remote SDP</em> area and clicks <em>Answer &amp; Connect</em>. They share the generated answer back.</li>
+        <li>Player A pastes the answer and clicks <em>Finalize Connection</em>. Once the status turns green, the board becomes live.</li>
+      </ol>
+      <p class="note">Tip: send the text through chat, email, or QR. It expires when the page reloads.</p>
+    </section>
+
+    <section class="connection">
+      <div class="card">
+        <h3>Step 1 · Share your SDP</h3>
+        <button id="createOffer">Create Offer</button>
+        <textarea id="localSdp" readonly placeholder="Your offer or answer will show up here. Share it with your opponent."></textarea>
+        <button id="copyLocal">Copy Text</button>
+      </div>
+
+      <div class="card">
+        <h3>Step 2 · Paste opponent SDP</h3>
+        <textarea id="remoteSdp" placeholder="Paste the text you received from the other player here."></textarea>
+        <div class="button-row">
+          <button id="answerConnect">Answer &amp; Connect</button>
+          <button id="finalizeConnection">Finalize Connection</button>
+        </div>
+      </div>
+
+      <div class="card status-card">
+        <h3>Connection status</h3>
+        <p id="statusText">Waiting for action…</p>
+        <pre id="log"></pre>
+      </div>
+    </section>
+
+    <section class="game">
+      <div class="game-info">
+        <p><strong>You play as:</strong> <span id="playerSymbol">–</span></p>
+        <p><strong>Turn:</strong> <span id="turnIndicator">–</span></p>
+        <p><strong>Result:</strong> <span id="result">Game not started</span></p>
+        <button id="resetGame">Reset board</button>
+      </div>
+      <div class="board" id="board"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built for GitHub Pages. All game data stays between your browsers.</p>
+  </footer>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
