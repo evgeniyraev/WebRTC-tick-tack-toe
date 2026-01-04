@@ -6,11 +6,15 @@ let pc = null;
 let dataChannel = null;
 let isOfferer = false;
 
-const localSdpEl = document.getElementById('localSdp');
-const remoteSdpEl = document.getElementById('remoteSdp');
-const createOfferBtn = document.getElementById('createOffer');
-const copyLocalBtn = document.getElementById('copyLocal');
-const answerBtn = document.getElementById('answerConnect');
+const hostOfferSdpEl = document.getElementById('hostOfferSdp');
+const hostAnswerSdpEl = document.getElementById('hostAnswerSdp');
+const guestOfferSdpEl = document.getElementById('guestOfferSdp');
+const guestAnswerSdpEl = document.getElementById('guestAnswerSdp');
+const hostCopyOfferBtn = document.getElementById('hostCopyOffer');
+const hostSharedOfferBtn = document.getElementById('hostSharedOffer');
+const hostShowOfferAgainBtn = document.getElementById('hostShowOfferAgain');
+const guestAnswerButton = document.getElementById('guestAnswerButton');
+const guestCopyAnswerButton = document.getElementById('guestCopyAnswerButton');
 const finalizeBtn = document.getElementById('finalizeConnection');
 const statusText = document.getElementById('statusText');
 const logEl = document.getElementById('log');
@@ -31,26 +35,69 @@ const scoreOpponentEl = document.getElementById('scoreOpponent');
 const scoreDrawsEl = document.getElementById('scoreDraws');
 const scoreYouLabel = document.getElementById('scoreYouLabel');
 const scoreOpponentLabel = document.getElementById('scoreOpponentLabel');
+const hostShareCard = document.getElementById('hostShareCard');
+const hostAwaitCard = document.getElementById('hostAwaitCard');
+const guestAnswerCard = document.getElementById('guestAnswerCard');
 
 const wizardState = {
   role: null,
   step: 1,
+  hostPhase: 'share',
 };
 
 const roleCopy = {
   host: {
     title: 'Invite a friend',
-    summary: 'Create an offer, send it to your friend, then paste their answer to finalize the WebRTC connection.',
-    localPlaceholder: 'Click “Create Offer” to generate the SDP blob to share.',
-    remotePlaceholder: 'Paste the answer you received and click “Finalize Connection”.',
+    summary: 'We generate an offer automatically. Copy it, share it, then paste their answer to finalize.',
   },
   guest: {
     title: 'Accept an invite',
-    summary: 'Paste the host offer, generate an answer, send it back, and wait for them to finalize.',
-    localPlaceholder: 'After you click “Answer & Connect”, your answer appears here to share back.',
-    remotePlaceholder: 'Paste the offer text sent by the host before answering.',
+    summary: 'Paste the host offer, click the button to answer (it copies for you), then share it back.',
   },
 };
+
+function clearSdpFields() {
+  hostOfferSdpEl.value = '';
+  hostAnswerSdpEl.value = '';
+  guestOfferSdpEl.value = '';
+  guestAnswerSdpEl.value = '';
+}
+
+function setLocalSdpValue(value = '') {
+  if (wizardState.role === 'host') {
+    hostOfferSdpEl.value = value;
+  } else if (wizardState.role === 'guest') {
+    guestAnswerSdpEl.value = value;
+  }
+}
+
+function getLocalSdpValue() {
+  if (wizardState.role === 'host') {
+    return hostOfferSdpEl.value.trim();
+  }
+  if (wizardState.role === 'guest') {
+    return guestAnswerSdpEl.value.trim();
+  }
+  return '';
+}
+
+function setRemoteSdpValue(value = '') {
+  if (wizardState.role === 'host') {
+    hostAnswerSdpEl.value = value;
+  } else if (wizardState.role === 'guest') {
+    guestOfferSdpEl.value = value;
+  }
+}
+
+function getRemoteSdpValue() {
+  if (wizardState.role === 'host') {
+    return hostAnswerSdpEl.value.trim();
+  }
+  if (wizardState.role === 'guest') {
+    return guestOfferSdpEl.value.trim();
+  }
+  return '';
+}
 
 const sessionState = {
   hostSymbol: 'X',
@@ -120,15 +167,46 @@ function toggleRoleViews(role) {
 function configureRoleCopy(role) {
   if (!role || !roleCopy[role]) {
     connectionTitle.textContent = 'Connection setup';
-    connectionSummary.textContent = 'Choose “Invite a friend” or “Accept an invite” to see step-by-step directions.';
-    localSdpEl.placeholder = 'Choose a role to begin.';
-    remoteSdpEl.placeholder = 'Choose a role to begin.';
+    connectionSummary.textContent = 'Choose "Invite a friend" or "Accept an invite" to see step-by-step directions.';
     return;
   }
   connectionTitle.textContent = roleCopy[role].title;
   connectionSummary.textContent = roleCopy[role].summary;
-  localSdpEl.placeholder = roleCopy[role].localPlaceholder;
-  remoteSdpEl.placeholder = roleCopy[role].remotePlaceholder;
+}
+
+function showHostShareCard() {
+  wizardState.hostPhase = 'share';
+  hostShareCard.classList.remove('hidden');
+  hostAwaitCard.classList.add('hidden');
+  if (wizardState.role === 'host') {
+    setRemoteSdpValue('');
+  } else {
+    hostAnswerSdpEl.value = '';
+  }
+  finalizeBtn.disabled = true;
+  const hasOffer = Boolean(hostOfferSdpEl.value.trim());
+  hostCopyOfferBtn.disabled = !hasOffer;
+  hostSharedOfferBtn.disabled = !hasOffer;
+  updateFinalizeAvailability();
+}
+
+function showHostAwaitCard() {
+  wizardState.hostPhase = 'awaitAnswer';
+  hostShareCard.classList.add('hidden');
+  hostAwaitCard.classList.remove('hidden');
+  hostAnswerSdpEl.focus();
+  updateFinalizeAvailability();
+}
+
+function toggleGuestAnswerCard(show) {
+  if (show) {
+    guestAnswerCard.classList.remove('hidden');
+    guestCopyAnswerButton.disabled = false;
+  } else {
+    guestAnswerCard.classList.add('hidden');
+    guestAnswerSdpEl.value = '';
+    guestCopyAnswerButton.disabled = true;
+  }
 }
 
 function initializeSessionState() {
@@ -157,18 +235,24 @@ function applySessionState(nextState) {
 function selectRole(role) {
   wizardState.role = role;
   isOfferer = role === 'host';
+  wizardState.hostPhase = 'share';
   toggleRoleViews(role);
   configureRoleCopy(role);
   updatePlayerSymbol();
-  localSdpEl.value = '';
-  remoteSdpEl.value = '';
+  clearSdpFields();
   clearLog();
   resetGame({ announce: false });
-  setStatus(
-    role === 'host'
-      ? 'Click “Create Offer” to generate your invite.'
-      : 'Paste the host offer and click “Answer & Connect”.'
-  );
+  if (role === 'host') {
+    hostOfferSdpEl.placeholder = 'Generating offer...';
+    hostCopyOfferBtn.disabled = true;
+    hostSharedOfferBtn.disabled = true;
+    showHostShareCard();
+    setStatus('Generating offer...');
+    createOffer();
+  } else {
+    toggleGuestAnswerCard(false);
+    setStatus('Paste the host offer and click "Copy answer & connect".');
+  }
   goToStep(2);
 }
 
@@ -178,9 +262,13 @@ function returnToRoleSelection() {
   toggleRoleViews(null);
   configureRoleCopy(null);
   clearLog();
-  localSdpEl.value = '';
-  remoteSdpEl.value = '';
-  setStatus('Waiting for action…');
+  clearSdpFields();
+  showHostShareCard();
+  toggleGuestAnswerCard(false);
+  hostCopyOfferBtn.disabled = true;
+  hostSharedOfferBtn.disabled = true;
+  guestCopyAnswerButton.disabled = true;
+  setStatus('Waiting for action...');
   initializeSessionState();
   resetGame({ announce: false });
   if (pc) {
@@ -199,8 +287,8 @@ function ensureRole(requiredRole) {
   if (wizardState.role !== requiredRole) {
     setStatus(
       requiredRole === 'host'
-        ? 'Choose “Invite a friend” first.'
-        : 'Choose “Accept an invite” first.',
+        ? 'Choose "Invite a friend" first.'
+        : 'Choose "Accept an invite" first.',
       'error'
     );
     return false;
@@ -217,7 +305,8 @@ function resetPeerConnection({ createDataChannel = false } = {}) {
     }
   }
   teardownDataChannel();
-  localSdpEl.value = '';
+  setLocalSdpValue('');
+  setRemoteSdpValue('');
   pc = new RTCPeerConnection(config);
   pc.oniceconnectionstatechange = () => {
     log(`ICE state: ${pc.iceConnectionState}`);
@@ -237,7 +326,7 @@ function resetPeerConnection({ createDataChannel = false } = {}) {
       return;
     }
     if (pc.localDescription) {
-      localSdpEl.value = JSON.stringify(pc.localDescription);
+      setLocalSdpValue(JSON.stringify(pc.localDescription));
     }
   };
   pc.ondatachannel = (event) => {
@@ -304,15 +393,19 @@ async function createOffer() {
   }
   isOfferer = true;
   resetPeerConnection({ createDataChannel: true });
-  remoteSdpEl.value = '';
+  setRemoteSdpValue('');
   resetGame({ announce: false });
-  setStatus('Generating offer…');
+  setStatus('Generating offer...');
   try {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     await waitForIceGathering(pc);
-    localSdpEl.value = JSON.stringify(pc.localDescription);
-    setStatus('Share this offer with your friend.');
+    const description = JSON.stringify(pc.localDescription);
+    setLocalSdpValue(description);
+    hostCopyOfferBtn.disabled = false;
+    hostSharedOfferBtn.disabled = false;
+    hostOfferSdpEl.placeholder = 'Copy and share this text.';
+    setStatus('Copy and share this offer, then click "I shared it".');
     log('Offer ready. Send it to the other player.');
   } catch (error) {
     console.error(error);
@@ -324,7 +417,8 @@ async function answerAndConnect() {
   if (!ensureRole('guest')) {
     return;
   }
-  const remoteDescription = remoteSdpEl.value.trim();
+  const remoteRaw = guestOfferSdpEl.value;
+  const remoteDescription = remoteRaw.trim();
   if (!remoteDescription) {
     setStatus('Paste the remote offer first.', 'error');
     return;
@@ -333,16 +427,24 @@ async function answerAndConnect() {
     const offer = JSON.parse(remoteDescription);
     isOfferer = false;
     resetPeerConnection({ createDataChannel: false });
-    localSdpEl.value = '';
+    guestOfferSdpEl.value = remoteRaw;
+    setLocalSdpValue('');
     resetGame({ announce: false });
-    setStatus('Connecting… setting remote offer.');
+    setStatus('Connecting... setting remote offer.');
     await pc.setRemoteDescription(offer);
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
     await waitForIceGathering(pc);
-    localSdpEl.value = JSON.stringify(pc.localDescription);
-    setStatus('Share this answer back to the host.');
+    const description = JSON.stringify(pc.localDescription);
+    setLocalSdpValue(description);
+    toggleGuestAnswerCard(true);
     log('Answer created. Send it back to finish setup.');
+    const copied = await copyTextToClipboard(description);
+    if (copied) {
+      setStatus('Answer copied! Share it with the host.');
+    } else {
+      setStatus('Answer ready. Copy it from the box and share.', 'error');
+    }
   } catch (error) {
     console.error(error);
     setStatus('Could not process offer. Check the text and try again.', 'error');
@@ -353,7 +455,7 @@ async function finalizeConnection() {
   if (!ensureRole('host')) {
     return;
   }
-  const remoteDescription = remoteSdpEl.value.trim();
+  const remoteDescription = getRemoteSdpValue();
   if (!remoteDescription) {
     setStatus('Paste the answer before finalizing.', 'error');
     return;
@@ -365,8 +467,9 @@ async function finalizeConnection() {
   try {
     const answer = JSON.parse(remoteDescription);
     await pc.setRemoteDescription(answer);
-    setStatus('Waiting for data channel to open…');
-    remoteSdpEl.value = '';
+    setStatus('Waiting for data channel to open...');
+    setRemoteSdpValue('');
+    updateFinalizeAvailability();
     log('Remote answer set. Waiting for channel.');
   } catch (error) {
     console.error(error);
@@ -382,7 +485,7 @@ function updatePlayerSymbol() {
   } else {
     gameState.playerSymbol = sessionState.guestSymbol;
   }
-  playerSymbolEl.textContent = gameState.playerSymbol ?? '–';
+  playerSymbolEl.textContent = gameState.playerSymbol ?? '-';
 }
 
 function updateScoreboardUI() {
@@ -419,7 +522,7 @@ function updateBoardUI() {
       cell.classList.toggle('filled', Boolean(gameState.board[i]));
     }
   }
-  const activeTurn = gameState.connected && !gameState.roundComplete ? gameState.currentTurn : '–';
+  const activeTurn = gameState.connected && !gameState.roundComplete ? gameState.currentTurn : '-';
   turnIndicatorEl.textContent = activeTurn;
   if (gameState.roundComplete) {
     if (gameState.winner) {
@@ -594,6 +697,20 @@ function sendMessage(payload) {
   dataChannel.send(JSON.stringify(payload));
 }
 
+async function copyTextToClipboard(text) {
+  if (!text) {
+    return false;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    log('Copied to clipboard');
+    return true;
+  } catch (error) {
+    log('Clipboard copy failed');
+    return false;
+  }
+}
+
 function checkWinner() {
   for (const [a, b, c] of winPatterns) {
     if (!gameState.board[a]) continue;
@@ -621,25 +738,46 @@ function setupEventListeners() {
     const shouldToggle = gameState.roundComplete;
     resetGame({ announce: true, toggleSymbols: shouldToggle });
   });
-  createOfferBtn.addEventListener('click', () => createOffer());
-  answerBtn.addEventListener('click', () => answerAndConnect());
   finalizeBtn.addEventListener('click', () => finalizeConnection());
-  copyLocalBtn.addEventListener('click', async () => {
-    if (!localSdpEl.value) {
+  hostCopyOfferBtn.addEventListener('click', async () => {
+    await copyTextToClipboard(hostOfferSdpEl.value);
+  });
+  hostSharedOfferBtn.addEventListener('click', () => {
+    showHostAwaitCard();
+    setStatus("Waiting for your friend's answer. Paste it once you receive it.");
+  });
+  hostShowOfferAgainBtn.addEventListener('click', () => {
+    showHostShareCard();
+    setStatus('Copy and share your offer again if needed.');
+  });
+  hostAnswerSdpEl.addEventListener('input', () => {
+    updateFinalizeAvailability();
+  });
+  guestAnswerButton.addEventListener('click', async () => {
+    if (!guestOfferSdpEl.value.trim()) {
+      setStatus('Paste the host offer first.', 'error');
       return;
     }
+    guestAnswerButton.disabled = true;
     try {
-      await navigator.clipboard.writeText(localSdpEl.value);
-      log('Copied to clipboard');
-    } catch (error) {
-      log('Clipboard copy failed');
+      await answerAndConnect();
+    } finally {
+      guestAnswerButton.disabled = false;
     }
+  });
+  guestCopyAnswerButton.addEventListener('click', async () => {
+    await copyTextToClipboard(guestAnswerSdpEl.value);
   });
   roleButtons.forEach((button) => {
     button.addEventListener('click', () => selectRole(button.dataset.roleSelect));
   });
   backToRoleBtn.addEventListener('click', () => returnToRoleSelection());
   endSessionBtn.addEventListener('click', () => returnToRoleSelection());
+}
+
+function updateFinalizeAvailability() {
+  const hasText = Boolean(hostAnswerSdpEl.value.trim());
+  finalizeBtn.disabled = !hasText;
 }
 
 function initialSetup() {
@@ -651,8 +789,11 @@ function initialSetup() {
   updateBoardUI();
   updateScoreboardUI();
   updateRoundActionButton();
+  hostCopyOfferBtn.disabled = true;
+  hostSharedOfferBtn.disabled = true;
+  guestCopyAnswerButton.disabled = true;
   goToStep(1);
-  setStatus('Waiting for action…');
+  setStatus('Waiting for action...');
 }
 
 async function waitForIceGathering(connection) {

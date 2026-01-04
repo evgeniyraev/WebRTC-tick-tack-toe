@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>WebRTC Tic-Tac-Toe</h1>
-    <p>A tiny wizard helps you host or join a peer-to-peer match using WebRTC data channels. No servers — just exchange the generated text.</p>
+    <p>A tiny wizard helps you host or join a peer-to-peer match using WebRTC data channels. No servers - just exchange the generated text.</p>
   </header>
 
   <main>
@@ -48,35 +48,54 @@
         <p id="connectionSummary">Choose a role to see detailed instructions.</p>
       </div>
       <div class="role-note" data-role-visible="host">
-        <strong>Host flow:</strong> Create an offer, copy the generated text, send it to your friend, then paste their answer below and finalize the connection.
+        <strong>Host flow:</strong> We generate the offer as soon as you choose this role. Copy &amp; share it, close the panel, then paste the guest answer to finalize.
       </div>
       <div class="role-note" data-role-visible="guest">
-        <strong>Guest flow:</strong> Paste the host offer, click “Answer &amp; Connect”, share the generated answer back, and wait for the host to finalize.
+        <strong>Guest flow:</strong> Paste the host offer, click "Copy answer &amp; connect" to generate and copy your reply, then share it back so they can finalize.
       </div>
-      <section class="connection">
-        <div class="card">
-          <h3>Share your SDP</h3>
-          <button id="createOffer" class="primary" data-role-visible="host">Create Offer</button>
-          <textarea id="localSdp" readonly placeholder="Choose a role to begin."></textarea>
-          <button id="copyLocal" class="ghost">Copy text</button>
-        </div>
-
-        <div class="card">
-          <h3>Paste their SDP</h3>
-          <textarea id="remoteSdp" placeholder="Choose a role to begin."></textarea>
+      <section class="connection host-flow" data-role-visible="host">
+        <div class="card" id="hostShareCard">
+          <h3>Share your offer</h3>
+          <p>We've generated your invitation. Copy the text below and send it to your friend.</p>
+          <textarea id="hostOfferSdp" readonly placeholder="Generating offer..."></textarea>
           <div class="button-row">
-            <button id="answerConnect" class="primary" data-role-visible="guest">Answer &amp; Connect</button>
-            <button id="finalizeConnection" class="primary" data-role-visible="host">Finalize Connection</button>
+            <button id="hostCopyOffer" class="primary" disabled>Copy offer</button>
+            <button id="hostSharedOffer" class="ghost" disabled>I shared it</button>
           </div>
         </div>
-
-        <div class="card status-card">
-          <h3>Connection status</h3>
-          <p id="statusText">Waiting for action…</p>
-          <pre id="log"></pre>
+        <div class="card hidden" id="hostAwaitCard">
+          <h3>Paste guest answer</h3>
+          <p>Once they reply, paste their answer here and finalize the connection.</p>
+          <textarea id="hostAnswerSdp" placeholder="Waiting for guest answer..."></textarea>
+          <div class="button-row">
+            <button id="hostShowOfferAgain" class="ghost">Show my offer again</button>
+            <button id="finalizeConnection" class="primary" disabled>Finalize connection</button>
+          </div>
         </div>
       </section>
-      <p class="note">When the data channel opens, we will switch to Step 3 automatically so you can start the match.</p>
+
+      <section class="connection guest-flow" data-role-visible="guest">
+        <div class="card" id="guestPasteCard">
+          <h3>Paste host offer</h3>
+          <p>Drop the text the host sent you. Then click the button to answer, copy, and connect.</p>
+          <textarea id="guestOfferSdp" placeholder="Paste host SDP offer here."></textarea>
+          <button id="guestAnswerButton" class="primary">Copy answer &amp; connect</button>
+        </div>
+        <div class="card hidden" id="guestAnswerCard">
+          <h3>Your answer</h3>
+          <p>Share this response with the host so they can finalize the match.</p>
+          <textarea id="guestAnswerSdp" readonly placeholder="Your answer will appear here."></textarea>
+          <button id="guestCopyAnswerButton" class="ghost">Copy answer again</button>
+        </div>
+      </section>
+
+      <div class="card status-card">
+        <h3>Connection status</h3>
+        <p id="statusText">Waiting for action...</p>
+        <pre id="log"></pre>
+      </div>
+
+      <p class="note">When the data channel opens, we switch to Step 3 automatically so you can start the match.</p>
       <div class="wizard-actions">
         <button id="backToRole" class="ghost">Back to role selection</button>
       </div>
@@ -90,8 +109,8 @@
       </div>
       <section class="game">
         <div class="game-info">
-          <p><strong>You play as:</strong> <span id="playerSymbol">–</span></p>
-          <p><strong>Turn:</strong> <span id="turnIndicator">–</span></p>
+          <p><strong>You play as:</strong> <span id="playerSymbol">-</span></p>
+          <p><strong>Turn:</strong> <span id="turnIndicator">-</span></p>
           <p><strong>Result:</strong> <span id="result">Game not started</span></p>
           <div class="scoreboard">
             <div class="score-block">
