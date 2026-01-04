@@ -440,15 +440,11 @@ async function answerAndConnect() {
     setLocalSdpValue(description);
     toggleGuestAnswerCard(true);
     log('Answer created. Send it back to finish setup.');
-    const copied = await copyTextToClipboard(description);
-    if (copied) {
-      setStatus('Answer copied! Share it with the host.');
-    } else {
-      setStatus('Answer ready. Copy it from the box and share.', 'error');
-    }
+    return description;
   } catch (error) {
     console.error(error);
     setStatus('Could not process offer. Check the text and try again.', 'error');
+    return null;
   }
 }
 
@@ -702,14 +698,41 @@ async function copyTextToClipboard(text) {
   if (!text) {
     return false;
   }
-  try {
-    await navigator.clipboard.writeText(text);
-    log('Copied to clipboard');
-    return true;
-  } catch (error) {
-    log('Clipboard copy failed');
-    return false;
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      log('Copied to clipboard');
+      return true;
+    } catch (error) {
+      console.warn('navigator.clipboard failed', error);
+    }
   }
+  const fallbackWorked = fallbackCopyText(text);
+  if (fallbackWorked) {
+    log('Copied to clipboard');
+  } else {
+    log('Clipboard copy failed');
+  }
+  return fallbackWorked;
+}
+
+function fallbackCopyText(text) {
+  const temp = document.createElement('textarea');
+  temp.value = text;
+  temp.setAttribute('readonly', '');
+  temp.style.position = 'fixed';
+  temp.style.top = '-1000px';
+  document.body.appendChild(temp);
+  temp.select();
+  temp.setSelectionRange(0, temp.value.length);
+  let succeeded = false;
+  try {
+    succeeded = document.execCommand('copy');
+  } catch (error) {
+    console.error('execCommand copy failed', error);
+  }
+  document.body.removeChild(temp);
+  return succeeded;
 }
 
 function buildShareUrl(offerText) {
@@ -803,7 +826,16 @@ function setupEventListeners() {
     }
     guestAnswerButton.disabled = true;
     try {
-      await answerAndConnect();
+      const answerText = await answerAndConnect();
+      if (!answerText) {
+        return;
+      }
+      const copied = await copyTextToClipboard(answerText);
+      if (copied) {
+        setStatus('Answer copied! Share it with the host.');
+      } else {
+        setStatus('Answer ready. Copy it from the box and share.', 'error');
+      }
     } finally {
       guestAnswerButton.disabled = false;
     }
