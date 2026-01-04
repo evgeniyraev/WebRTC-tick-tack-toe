@@ -93,6 +93,20 @@
           <p><strong>You play as:</strong> <span id="playerSymbol">–</span></p>
           <p><strong>Turn:</strong> <span id="turnIndicator">–</span></p>
           <p><strong>Result:</strong> <span id="result">Game not started</span></p>
+          <div class="scoreboard">
+            <div class="score-block">
+              <p class="score-label" id="scoreYouLabel">You</p>
+              <p class="score-value" id="scoreYou">0</p>
+            </div>
+            <div class="score-block">
+              <p class="score-label" id="scoreOpponentLabel">Friend</p>
+              <p class="score-value" id="scoreOpponent">0</p>
+            </div>
+            <div class="score-block draws">
+              <p class="score-label">Draws</p>
+              <p class="score-value" id="scoreDraws">0</p>
+            </div>
+          </div>
           <div class="game-actions">
             <button id="resetGame" class="primary">Reset board</button>
             <button id="endSession" class="ghost">End session</button>

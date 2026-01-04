@@ -26,6 +26,11 @@ const steps = document.querySelectorAll('[data-step]');
 const roleViews = document.querySelectorAll('[data-role-visible]');
 const connectionTitle = document.getElementById('connectionTitle');
 const connectionSummary = document.getElementById('connectionSummary');
+const scoreYouEl = document.getElementById('scoreYou');
+const scoreOpponentEl = document.getElementById('scoreOpponent');
+const scoreDrawsEl = document.getElementById('scoreDraws');
+const scoreYouLabel = document.getElementById('scoreYouLabel');
+const scoreOpponentLabel = document.getElementById('scoreOpponentLabel');
 
 const wizardState = {
   role: null,
@@ -47,12 +52,23 @@ const roleCopy = {
   },
 };
 
+const sessionState = {
+  hostSymbol: 'X',
+  guestSymbol: 'O',
+  scoreboard: {
+    host: 0,
+    guest: 0,
+    draws: 0,
+  },
+};
+
 const gameState = {
   board: Array(9).fill(null),
   currentTurn: 'X',
   playerSymbol: null,
   winner: null,
   connected: false,
+  roundComplete: false,
 };
 
 const winPatterns = [
@@ -115,17 +131,39 @@ function configureRoleCopy(role) {
   remoteSdpEl.placeholder = roleCopy[role].remotePlaceholder;
 }
 
+function initializeSessionState() {
+  sessionState.hostSymbol = 'X';
+  sessionState.guestSymbol = 'O';
+  sessionState.scoreboard = { host: 0, guest: 0, draws: 0 };
+  updateScoreboardUI();
+}
+
+function applySessionState(nextState) {
+  if (!nextState) {
+    return;
+  }
+  sessionState.hostSymbol = nextState.hostSymbol ?? 'X';
+  const guestSymbol = nextState.guestSymbol ?? (sessionState.hostSymbol === 'X' ? 'O' : 'X');
+  sessionState.guestSymbol = guestSymbol === sessionState.hostSymbol ? (sessionState.hostSymbol === 'X' ? 'O' : 'X') : guestSymbol;
+  sessionState.scoreboard = {
+    host: nextState.scoreboard?.host ?? 0,
+    guest: nextState.scoreboard?.guest ?? 0,
+    draws: nextState.scoreboard?.draws ?? 0,
+  };
+  updatePlayerSymbol();
+  updateScoreboardUI();
+}
+
 function selectRole(role) {
   wizardState.role = role;
   isOfferer = role === 'host';
   toggleRoleViews(role);
   configureRoleCopy(role);
-  gameState.playerSymbol = role === 'host' ? 'X' : 'O';
   updatePlayerSymbol();
   localSdpEl.value = '';
   remoteSdpEl.value = '';
   clearLog();
-  resetGame(false);
+  resetGame({ announce: false });
   setStatus(
     role === 'host'
       ? 'Click “Create Offer” to generate your invite.'
@@ -143,9 +181,8 @@ function returnToRoleSelection() {
   localSdpEl.value = '';
   remoteSdpEl.value = '';
   setStatus('Waiting for action…');
-  gameState.playerSymbol = null;
-  updatePlayerSymbol();
-  resetGame(false);
+  initializeSessionState();
+  resetGame({ announce: false });
   if (pc) {
     try {
       pc.close();
@@ -190,7 +227,9 @@ function resetPeerConnection({ createDataChannel = false } = {}) {
     if (pc.connectionState === 'failed') {
       setStatus('Connection failed. Try resetting and starting again.', 'error');
       teardownDataChannel();
-      goToStep(2);
+      if (wizardState.role) {
+        goToStep(2);
+      }
     }
   };
   pc.onicecandidate = (event) => {
@@ -219,10 +258,10 @@ function attachDataChannel(channel) {
     gameState.connected = true;
     setStatus('Connected! Start playing.', 'ready');
     updatePlayerSymbol();
+    updateBoardUI();
+    updateScoreboardUI();
     sendSyncState();
-    if (wizardState.step !== 3) {
-      goToStep(3);
-    }
+    goToStep(3);
   };
   dataChannel.onclose = () => {
     log('Data channel closed');
@@ -231,6 +270,7 @@ function attachDataChannel(channel) {
     if (wizardState.role) {
       goToStep(2);
     }
+    updateBoardUI();
   };
   dataChannel.onerror = (event) => {
     console.error(event);
@@ -265,9 +305,7 @@ async function createOffer() {
   isOfferer = true;
   resetPeerConnection({ createDataChannel: true });
   remoteSdpEl.value = '';
-  gameState.playerSymbol = 'X';
-  resetGame(false);
-  updatePlayerSymbol();
+  resetGame({ announce: false });
   setStatus('Generating offer…');
   try {
     const offer = await pc.createOffer();
@@ -296,9 +334,7 @@ async function answerAndConnect() {
     isOfferer = false;
     resetPeerConnection({ createDataChannel: false });
     localSdpEl.value = '';
-    gameState.playerSymbol = 'O';
-    resetGame(false);
-    updatePlayerSymbol();
+    resetGame({ announce: false });
     setStatus('Connecting… setting remote offer.');
     await pc.setRemoteDescription(offer);
     const answer = await pc.createAnswer();
@@ -339,26 +375,64 @@ async function finalizeConnection() {
 }
 
 function updatePlayerSymbol() {
+  if (!wizardState.role) {
+    gameState.playerSymbol = null;
+  } else if (wizardState.role === 'host') {
+    gameState.playerSymbol = sessionState.hostSymbol;
+  } else {
+    gameState.playerSymbol = sessionState.guestSymbol;
+  }
   playerSymbolEl.textContent = gameState.playerSymbol ?? '–';
+}
+
+function updateScoreboardUI() {
+  const scoreboard = sessionState.scoreboard;
+  if (!wizardState.role) {
+    scoreYouLabel.textContent = 'You';
+    scoreOpponentLabel.textContent = 'Friend';
+    scoreYouEl.textContent = scoreboard.host;
+    scoreOpponentEl.textContent = scoreboard.guest;
+  } else if (wizardState.role === 'host') {
+    scoreYouLabel.textContent = 'You (Host)';
+    scoreOpponentLabel.textContent = 'Friend (Guest)';
+    scoreYouEl.textContent = scoreboard.host;
+    scoreOpponentEl.textContent = scoreboard.guest;
+  } else {
+    scoreYouLabel.textContent = 'You (Guest)';
+    scoreOpponentLabel.textContent = 'Friend (Host)';
+    scoreYouEl.textContent = scoreboard.guest;
+    scoreOpponentEl.textContent = scoreboard.host;
+  }
+  scoreDrawsEl.textContent = scoreboard.draws;
+}
+
+function updateRoundActionButton() {
+  if (!resetGameBtn) return;
+  resetGameBtn.textContent = gameState.roundComplete ? 'Start next round' : 'Reset board';
 }
 
 function updateBoardUI() {
   for (let i = 0; i < gameState.board.length; i += 1) {
     const cell = document.querySelector(`[data-cell="${i}"]`);
-    cell.textContent = gameState.board[i] ?? '';
-    cell.classList.toggle('filled', Boolean(gameState.board[i]));
+    if (cell) {
+      cell.textContent = gameState.board[i] ?? '';
+      cell.classList.toggle('filled', Boolean(gameState.board[i]));
+    }
   }
-  const isActive = gameState.connected && !gameState.winner;
-  turnIndicatorEl.textContent = isActive ? gameState.currentTurn : '–';
-  if (gameState.winner) {
-    resultEl.textContent = `${gameState.winner} wins!`;
-  } else if (!gameState.board.includes(null) && gameState.connected) {
-    resultEl.textContent = 'Draw!';
+  const activeTurn = gameState.connected && !gameState.roundComplete ? gameState.currentTurn : '–';
+  turnIndicatorEl.textContent = activeTurn;
+  if (gameState.roundComplete) {
+    if (gameState.winner) {
+      resultEl.textContent = `${gameState.winner} wins!`;
+    } else {
+      resultEl.textContent = 'Draw!';
+    }
   } else if (!gameState.connected) {
     resultEl.textContent = wizardState.role ? 'Waiting for connection' : 'Game not started';
   } else {
     resultEl.textContent = 'Game in progress';
   }
+  updateRoundActionButton();
 }
 
 function handleCellClick(index) {
@@ -366,7 +440,7 @@ function handleCellClick(index) {
     log('Not connected yet.');
     return;
   }
-  if (gameState.winner) {
+  if (gameState.roundComplete) {
     return;
   }
   if (gameState.board[index]) {
@@ -380,21 +454,85 @@ function handleCellClick(index) {
 }
 
 function playMove(index, symbol, isLocal) {
-  if (gameState.board[index] || gameState.winner) {
+  if (gameState.board[index] || gameState.roundComplete) {
     return;
   }
   gameState.board[index] = symbol;
-  gameState.currentTurn = symbol === 'X' ? 'O' : 'X';
   const winner = checkWinner();
-  if (winner) {
-    gameState.winner = winner;
-  }
-  if (!gameState.board.includes(null) && !winner && gameState.connected) {
-    resultEl.textContent = 'Draw!';
+  const isDraw = !winner && !gameState.board.includes(null);
+  if (winner || isDraw) {
+    gameState.winner = winner ?? null;
+    gameState.roundComplete = true;
+  } else {
+    gameState.currentTurn = symbol === 'X' ? 'O' : 'X';
   }
   updateBoardUI();
   if (isLocal) {
     sendMessage({ type: 'move', index, symbol });
+    if (gameState.roundComplete) {
+      finalizeRound(
+        winner
+          ? { winner }
+          : { draw: true },
+        true
+      );
+    }
+  }
+}
+
+function finalizeRound(outcome, initiatedLocally) {
+  if (!outcome || !initiatedLocally) {
+    return;
+  }
+  updateScoreboardForOutcome(outcome);
+  updateScoreboardUI();
+  updateRoundActionButton();
+  sendMessage({ type: 'roundComplete', outcome, session: sessionState });
+}
+
+function updateScoreboardForOutcome(outcome) {
+  if (outcome.winner) {
+    const winnerRole = getRoleForSymbol(outcome.winner);
+    if (winnerRole) {
+      sessionState.scoreboard[winnerRole] += 1;
+    }
+  } else if (outcome.draw) {
+    sessionState.scoreboard.draws += 1;
+  }
+}
+
+function getRoleForSymbol(symbol) {
+  if (symbol === sessionState.hostSymbol) {
+    return 'host';
+  }
+  if (symbol === sessionState.guestSymbol) {
+    return 'guest';
+  }
+  return null;
+}
+
+function swapSessionSymbols() {
+  const nextHostSymbol = sessionState.hostSymbol === 'X' ? 'O' : 'X';
+  sessionState.hostSymbol = nextHostSymbol;
+  sessionState.guestSymbol = nextHostSymbol === 'X' ? 'O' : 'X';
+  updatePlayerSymbol();
+}
+
+function resetGame({ announce = true, sessionOverride = null, toggleSymbols = false } = {}) {
+  if (sessionOverride) {
+    applySessionState(sessionOverride);
+  } else if (toggleSymbols) {
+    swapSessionSymbols();
+  }
+  gameState.board = Array(9).fill(null);
+  gameState.currentTurn = 'X';
+  gameState.winner = null;
+  gameState.roundComplete = false;
+  updatePlayerSymbol();
+  updateBoardUI();
+  updateScoreboardUI();
+  if (announce) {
+    sendMessage({ type: 'reset', session: sessionState });
   }
 }
 
@@ -404,7 +542,16 @@ function handleIncomingMessage(payload) {
       playMove(payload.index, payload.symbol, false);
       break;
     case 'reset':
-      resetGame(false);
+      resetGame({ announce: false, sessionOverride: payload.session });
+      break;
+    case 'roundComplete':
+      if (payload.session) {
+        applySessionState(payload.session);
+      }
+      gameState.roundComplete = true;
+      gameState.winner = payload.outcome?.winner ?? null;
+      updateBoardUI();
+      updateRoundActionButton();
       break;
     case 'sync':
       syncRemoteState(payload.state);
@@ -415,11 +562,12 @@ function handleIncomingMessage(payload) {
 }
 
 function syncRemoteState(state) {
-  gameState.board = state.board;
-  gameState.currentTurn = state.currentTurn;
-  gameState.winner = state.winner;
-  gameState.playerSymbol = gameState.playerSymbol ?? (isOfferer ? 'X' : 'O');
-  updatePlayerSymbol();
+  if (!state) return;
+  gameState.board = state.board ?? Array(9).fill(null);
+  gameState.currentTurn = state.currentTurn ?? 'X';
+  gameState.winner = state.winner ?? null;
+  gameState.roundComplete = Boolean(state.roundComplete);
+  applySessionState(state.session ?? sessionState);
   updateBoardUI();
 }
 
@@ -433,6 +581,8 @@ function sendSyncState() {
       board: gameState.board,
       currentTurn: gameState.currentTurn,
       winner: gameState.winner,
+      roundComplete: gameState.roundComplete,
+      session: sessionState,
     },
   });
 }
@@ -454,16 +604,6 @@ function checkWinner() {
   return null;
 }
 
-function resetGame(announce = true) {
-  gameState.board = Array(9).fill(null);
-  gameState.currentTurn = 'X';
-  gameState.winner = null;
-  updateBoardUI();
-  if (announce) {
-    sendMessage({ type: 'reset' });
-  }
-}
-
 function initBoard() {
   boardEl.innerHTML = '';
   gameState.board.forEach((_, index) => {
@@ -476,34 +616,44 @@ function initBoard() {
   });
 }
 
-initBoard();
-resetGame(false);
-configureRoleCopy(null);
-toggleRoleViews(null);
+function setupEventListeners() {
+  resetGameBtn.addEventListener('click', () => {
+    const shouldToggle = gameState.roundComplete;
+    resetGame({ announce: true, toggleSymbols: shouldToggle });
+  });
+  createOfferBtn.addEventListener('click', () => createOffer());
+  answerBtn.addEventListener('click', () => answerAndConnect());
+  finalizeBtn.addEventListener('click', () => finalizeConnection());
+  copyLocalBtn.addEventListener('click', async () => {
+    if (!localSdpEl.value) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(localSdpEl.value);
+      log('Copied to clipboard');
+    } catch (error) {
+      log('Clipboard copy failed');
+    }
+  });
+  roleButtons.forEach((button) => {
+    button.addEventListener('click', () => selectRole(button.dataset.roleSelect));
+  });
+  backToRoleBtn.addEventListener('click', () => returnToRoleSelection());
+  endSessionBtn.addEventListener('click', () => returnToRoleSelection());
+}
 
-resetGameBtn.addEventListener('click', () => resetGame(true));
-createOfferBtn.addEventListener('click', () => createOffer());
-answerBtn.addEventListener('click', () => answerAndConnect());
-finalizeBtn.addEventListener('click', () => finalizeConnection());
-copyLocalBtn.addEventListener('click', async () => {
-  if (!localSdpEl.value) {
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(localSdpEl.value);
-    log('Copied to clipboard');
-  } catch (error) {
-    log('Clipboard copy failed');
-  }
-});
-roleButtons.forEach((button) => {
-  button.addEventListener('click', () => selectRole(button.dataset.roleSelect));
-});
-backToRoleBtn.addEventListener('click', () => returnToRoleSelection());
-endSessionBtn.addEventListener('click', () => returnToRoleSelection());
-
-goToStep(1);
-setStatus('Waiting for action…');
+function initialSetup() {
+  initBoard();
+  initializeSessionState();
+  resetGame({ announce: false });
+  configureRoleCopy(null);
+  toggleRoleViews(null);
+  updateBoardUI();
+  updateScoreboardUI();
+  updateRoundActionButton();
+  goToStep(1);
+  setStatus('Waiting for action…');
+}
 
 async function waitForIceGathering(connection) {
   if (connection.iceGatheringState === 'complete') {
@@ -526,3 +676,6 @@ window.addEventListener('beforeunload', () => {
   }
   teardownDataChannel();
 });
+
+setupEventListeners();
+initialSetup();
