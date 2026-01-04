@@ -51,7 +51,7 @@
         <strong>Host flow:</strong> We generate the offer as soon as you choose this role. Copy &amp; share it, close the panel, then paste the guest answer to finalize.
       </div>
       <div class="role-note" data-role-visible="guest">
-        <strong>Guest flow:</strong> Paste the host offer, click "Copy answer &amp; connect" to generate and copy your reply, then share it back so they can finalize.
+        <strong>Guest flow:</strong> Paste the host offer, click "Generate answer" to build your response, then press "Copy answer" and share it back so the host can finalize.
       </div>
       <section class="connection host-flow" data-role-visible="host">
         <div class="card" id="hostShareCard">
@@ -79,13 +79,13 @@
           <h3>Paste host offer</h3>
           <p>Drop the text the host sent you. Then click the button to answer, copy, and connect.</p>
           <textarea id="guestOfferSdp" placeholder="Paste host SDP offer here."></textarea>
-          <button id="guestAnswerButton" class="primary">Copy answer &amp; connect</button>
+          <button id="guestAnswerButton" class="primary">Generate answer</button>
         </div>
         <div class="card hidden" id="guestAnswerCard">
           <h3>Your answer</h3>
           <p>Share this response with the host so they can finalize the match.</p>
           <textarea id="guestAnswerSdp" readonly placeholder="Your answer will appear here."></textarea>
-          <button id="guestCopyAnswerButton" class="ghost">Copy answer again</button>
+          <button id="guestCopyAnswerButton" class="ghost">Copy answer</button>
         </div>
       </section>
 

@@ -252,7 +252,7 @@ function selectRole(role) {
     createOffer();
   } else {
     toggleGuestAnswerCard(false);
-    setStatus('Paste the host offer and click "Copy answer & connect".');
+    setStatus('Paste the host offer and click "Generate answer".');
   }
   goToStep(2);
 }
@@ -406,7 +406,7 @@ async function createOffer() {
     hostCopyOfferBtn.disabled = false;
     hostSharedOfferBtn.disabled = false;
     hostOfferSdpEl.placeholder = 'Copy and share this text.';
-    setStatus('Copy and share this offer, then click "I shared it".');
+    setStatus('Copy the offer or tap "Share link", then wait for the guest to respond.');
     log('Offer ready. Send it to the other player.');
   } catch (error) {
     console.error(error);
@@ -830,18 +830,18 @@ function setupEventListeners() {
       if (!answerText) {
         return;
       }
-      const copied = await copyTextToClipboard(answerText);
-      if (copied) {
-        setStatus('Answer copied! Share it with the host.');
-      } else {
-        setStatus('Answer ready. Copy it from the box and share.', 'error');
-      }
+      setStatus('Answer ready. Use "Copy answer" and send it to the host.');
     } finally {
       guestAnswerButton.disabled = false;
     }
   });
   guestCopyAnswerButton.addEventListener('click', async () => {
-    await copyTextToClipboard(guestAnswerSdpEl.value);
+    const copied = await copyTextToClipboard(guestAnswerSdpEl.value);
+    if (copied) {
+      setStatus('Answer copied! Share it with the host.');
+    } else {
+      setStatus('Copy failed. Try again after focusing the page.', 'error');
+    }
   });
   roleButtons.forEach((button) => {
     button.addEventListener('click', () => selectRole(button.dataset.roleSelect));
@@ -877,7 +877,7 @@ function prefillOfferFromUrl() {
   if (sharedOffer) {
     selectRole('guest');
     guestOfferSdpEl.value = sharedOffer;
-    setStatus('Invite detected. Review the offer and click "Copy answer & connect".');
+    setStatus('Invite detected. Review the offer and click "Generate answer".');
     guestOfferSdpEl.focus();
     try {
       const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.hash || ''}`;

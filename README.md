@@ -17,7 +17,7 @@ A static, GitHub Pages-ready WebRTC experiment that lets two people play tic-tac
 2. Serve the files locally (for example `python3 -m http.server`) or just open `index.html` in a browser.
 3. Use the built-in wizard:
    - Step 1: Pick **Invite a friend** if you are hosting (you will be player X) or **Accept an invite** if you already received an offer (you will be player O).
-   - Step 2: Follow the role-specific prompts - hosts automatically get an offer ready to copy/share (or use the Share button to send a link that pre-fills the guest page) before pasting the guest answer, while guests only see "Paste host SDP" plus a single "Copy answer & connect" button that generates and copies their reply.
+   - Step 2: Follow the role-specific prompts - hosts automatically get an offer ready to copy/share (or use the Share button to send a link that pre-fills the guest page) before pasting the guest answer, while guests only see "Paste host SDP" plus a "Generate answer" button and a separate "Copy answer" button to send their reply.
    - Step 3: The wizard switches to the game board once the WebRTC data channel opens. Each finished round updates the scoreboard and swaps who plays as X/O for the next match.
 
 The SDP blobs can be sent via chat, email, QR code, etc. A new pair of blobs is needed for each new match or if either player refreshes the page.
@@ -26,7 +26,8 @@ The SDP blobs can be sent via chat, email, QR code, etc. A new pair of blobs is 
 
 1. Push this repository to GitHub.
 2. In your GitHub repo settings, open **Pages** and choose the `main` branch with the root folder. Save the settings.
-3. GitHub Pages will build the static site and publish it at `https://<username>.github.io/<repo-name>/`.
+3. GitHub Pages will build the static site and publish it at `https://<username>.github.io/<repo-name>/`.  
+   Live example: [evgeniyraev.github.io/WebRTC-tick-tack-toe](https://evgeniyraev.github.io/WebRTC-tick-tack-toe/)
 
 Once deployed, share the URL with your friends. They can open the site in any modern browser that supports WebRTC.
 
