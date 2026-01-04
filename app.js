@@ -1,6 +1,7 @@
 const config = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 };
+const SHARE_QUERY_KEY = 'offer';
 
 let pc = null;
 let dataChannel = null;
@@ -711,6 +712,43 @@ async function copyTextToClipboard(text) {
   }
 }
 
+function buildShareUrl(offerText) {
+  const url = new URL(window.location.href);
+  url.searchParams.set(SHARE_QUERY_KEY, offerText);
+  return url.toString();
+}
+
+async function shareOfferLink() {
+  const offer = hostOfferSdpEl.value.trim();
+  if (!offer) {
+    setStatus('Offer not ready yet. Wait a second and try again.', 'error');
+    return;
+  }
+  const shareUrl = buildShareUrl(offer);
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'WebRTC Tic-Tac-Toe invite',
+        text: 'Join my tic-tac-toe match via WebRTC.',
+        url: shareUrl,
+      });
+      log('Shared invite link via Web Share API');
+      showHostAwaitCard();
+      setStatus("Shared the invite! Paste your friend's answer when it arrives.");
+      return;
+    } catch (error) {
+      log('Share canceled or failed');
+    }
+  }
+  const copied = await copyTextToClipboard(shareUrl);
+  if (copied) {
+    setStatus('Share link copied! Send it to your friend and wait for their answer.');
+    showHostAwaitCard();
+  } else {
+    setStatus('Could not copy the share link. Copy it manually from the page.', 'error');
+  }
+}
+
 function checkWinner() {
   for (const [a, b, c] of winPatterns) {
     if (!gameState.board[a]) continue;
@@ -740,11 +778,16 @@ function setupEventListeners() {
   });
   finalizeBtn.addEventListener('click', () => finalizeConnection());
   hostCopyOfferBtn.addEventListener('click', async () => {
-    await copyTextToClipboard(hostOfferSdpEl.value);
+    const copied = await copyTextToClipboard(hostOfferSdpEl.value);
+    if (copied) {
+      showHostAwaitCard();
+      setStatus("Offer copied! Waiting for your friend's answer.");
+    } else {
+      setStatus('Copy failed. Try again once the offer finishes generating.', 'error');
+    }
   });
   hostSharedOfferBtn.addEventListener('click', () => {
-    showHostAwaitCard();
-    setStatus("Waiting for your friend's answer. Paste it once you receive it.");
+    shareOfferLink();
   });
   hostShowOfferAgainBtn.addEventListener('click', () => {
     showHostShareCard();
@@ -796,6 +839,23 @@ function initialSetup() {
   setStatus('Waiting for action...');
 }
 
+function prefillOfferFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const sharedOffer = params.get(SHARE_QUERY_KEY);
+  if (sharedOffer) {
+    selectRole('guest');
+    guestOfferSdpEl.value = sharedOffer;
+    setStatus('Invite detected. Review the offer and click "Copy answer & connect".');
+    guestOfferSdpEl.focus();
+    try {
+      const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.hash || ''}`;
+      window.history.replaceState({}, document.title, cleanUrl);
+    } catch (error) {
+      console.warn('Unable to clean URL params', error);
+    }
+  }
+}
+
 async function waitForIceGathering(connection) {
   if (connection.iceGatheringState === 'complete') {
     return;
@@ -820,3 +880,4 @@ window.addEventListener('beforeunload', () => {
 
 setupEventListeners();
 initialSetup();
+prefillOfferFromUrl();
