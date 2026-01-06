@@ -1,0 +1,117 @@
+:root {
+  color-scheme: light dark;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  background-color: #0f172a;
+  color: #e2e8f0;
+  --card-bg: rgba(15, 23, 42, 0.8);
+  --accent: #38bdf8;
+  --accent-alt: #6366f1;
+  --accent-soft: rgba(56, 189, 248, 0.25);
+  --success: #34d399;
+  --danger: #fb7185;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, rgba(56, 189, 248, 0.15), transparent 60%),
+    radial-gradient(circle at bottom, rgba(52, 211, 153, 0.2), transparent 60%),
+    #0f172a;
+  color: inherit;
+}
+
+header,
+main,
+footer {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 1.5rem clamp(1rem, 4vw, 2.5rem);
+}
+
+header h1 {
+  margin-bottom: 0.5rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+textarea {
+  width: 100%;
+  min-height: 140px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(226, 232, 240, 0.2);
+  background: rgba(15, 23, 42, 0.6);
+  color: inherit;
+  padding: 0.75rem;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  resize: vertical;
+}
+
+button {
+  border: none;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+button.primary {
+  padding: 0.65rem 1.2rem;
+  background: linear-gradient(120deg, var(--accent), var(--accent-alt));
+  color: #0f172a;
+}
+
+button.ghost {
+  padding: 0.6rem 1.1rem;
+  background: rgba(226, 232, 240, 0.08);
+  color: inherit;
+  border: 1px solid rgba(226, 232, 240, 0.2);
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(56, 189, 248, 0.3);
+}
+
+.hidden {
+  display: none !important;
+}
+
+footer {
+  text-align: center;
+  color: rgba(226, 232, 240, 0.6);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    background-color: #f8fafc;
+    color: #0f172a;
+    --card-bg: rgba(255, 255, 255, 0.9);
+  }
+
+  body {
+    background: radial-gradient(circle at top, rgba(14, 165, 233, 0.1), transparent 40%),
+      radial-gradient(circle at bottom, rgba(52, 211, 153, 0.15), transparent 50%),
+      #f1f5f9;
+  }
+
+  button.ghost {
+    border-color: rgba(15, 23, 42, 0.2);
+  }
+}
