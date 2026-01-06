@@ -24,8 +24,8 @@ export function createGameManager(dom, { log }) {
   } = dom;
 
   const sessionState = {
-    hostSymbol: 'X',
-    guestSymbol: 'O',
+    hostSymbol: "X",
+    guestSymbol: "O",
     scoreboard: {
       host: 0,
       guest: 0,
@@ -35,7 +35,7 @@ export function createGameManager(dom, { log }) {
 
   const gameState = {
     board: Array(9).fill(null),
-    currentTurn: 'X',
+    currentTurn: "X",
     playerSymbol: null,
     winner: null,
     connected: false,
@@ -50,18 +50,23 @@ export function createGameManager(dom, { log }) {
   }
 
   function initializeSessionState() {
-    sessionState.hostSymbol = 'X';
-    sessionState.guestSymbol = 'O';
+    sessionState.hostSymbol = "X";
+    sessionState.guestSymbol = "O";
     sessionState.scoreboard = { host: 0, guest: 0, draws: 0 };
     updateScoreboardUI();
   }
 
   function applySessionState(nextState) {
     if (!nextState) return;
-    sessionState.hostSymbol = nextState.hostSymbol ?? 'X';
-    const guestSymbol = nextState.guestSymbol ?? (sessionState.hostSymbol === 'X' ? 'O' : 'X');
+    sessionState.hostSymbol = nextState.hostSymbol ?? "X";
+    const guestSymbol =
+      nextState.guestSymbol ?? (sessionState.hostSymbol === "X" ? "O" : "X");
     sessionState.guestSymbol =
-      guestSymbol === sessionState.hostSymbol ? (sessionState.hostSymbol === 'X' ? 'O' : 'X') : guestSymbol;
+      guestSymbol === sessionState.hostSymbol
+        ? sessionState.hostSymbol === "X"
+          ? "O"
+          : "X"
+        : guestSymbol;
     sessionState.scoreboard = {
       host: nextState.scoreboard?.host ?? 0,
       guest: nextState.scoreboard?.guest ?? 0,
@@ -88,29 +93,29 @@ export function createGameManager(dom, { log }) {
   function updatePlayerSymbol() {
     if (!currentRole) {
       gameState.playerSymbol = null;
-    } else if (currentRole === 'host') {
+    } else if (currentRole === "host") {
       gameState.playerSymbol = sessionState.hostSymbol;
     } else {
       gameState.playerSymbol = sessionState.guestSymbol;
     }
-    playerSymbolEl.textContent = gameState.playerSymbol ?? '-';
+    playerSymbolEl.textContent = gameState.playerSymbol ?? "-";
   }
 
   function updateScoreboardUI() {
     const { host, guest, draws } = sessionState.scoreboard;
     if (!currentRole) {
-      scoreYouLabel.textContent = 'You';
-      scoreOpponentLabel.textContent = 'Friend';
+      scoreYouLabel.textContent = "You";
+      scoreOpponentLabel.textContent = "Friend";
       scoreYouEl.textContent = host;
       scoreOpponentEl.textContent = guest;
-    } else if (currentRole === 'host') {
-      scoreYouLabel.textContent = 'You (Host)';
-      scoreOpponentLabel.textContent = 'Friend (Guest)';
+    } else if (currentRole === "host") {
+      scoreYouLabel.textContent = "You (Host)";
+      scoreOpponentLabel.textContent = "Friend (Guest)";
       scoreYouEl.textContent = host;
       scoreOpponentEl.textContent = guest;
     } else {
-      scoreYouLabel.textContent = 'You (Guest)';
-      scoreOpponentLabel.textContent = 'Friend (Host)';
+      scoreYouLabel.textContent = "You (Guest)";
+      scoreOpponentLabel.textContent = "Friend (Host)";
       scoreYouEl.textContent = guest;
       scoreOpponentEl.textContent = host;
     }
@@ -119,43 +124,50 @@ export function createGameManager(dom, { log }) {
 
   function updateRoundActionButton() {
     if (!resetGameBtn) return;
-    resetGameBtn.textContent = gameState.roundComplete ? 'Start next round' : 'Reset board';
+    resetGameBtn.textContent = gameState.roundComplete
+      ? "Start next round"
+      : "Reset board";
   }
 
   function updateBoardUI() {
     for (let i = 0; i < gameState.board.length; i += 1) {
       const cell = boardEl.querySelector(`[data-cell=\"${i}\"]`);
       if (cell) {
-        cell.textContent = gameState.board[i] ?? '';
-        cell.classList.toggle('filled', Boolean(gameState.board[i]));
+        cell.textContent = gameState.board[i] ?? "";
+        cell.classList.toggle("filled", Boolean(gameState.board[i]));
       }
     }
-    const activeTurn = gameState.connected && !gameState.roundComplete ? gameState.currentTurn : '-';
+    const activeTurn =
+      gameState.connected && !gameState.roundComplete
+        ? gameState.currentTurn
+        : "-";
     turnIndicatorEl.textContent = activeTurn;
     if (gameState.roundComplete) {
       if (gameState.winner) {
         resultEl.textContent = `${gameState.winner} wins!`;
       } else {
-        resultEl.textContent = 'Draw!';
+        resultEl.textContent = "Draw!";
       }
     } else if (!gameState.connected) {
-      resultEl.textContent = currentRole ? 'Waiting for connection' : 'Game not started';
+      resultEl.textContent = currentRole
+        ? "Waiting for connection"
+        : "Game not started";
     } else {
-      resultEl.textContent = 'Game in progress';
+      resultEl.textContent = "Game in progress";
     }
     updateRoundActionButton();
   }
 
   function handleCellClick(index) {
     if (!gameState.connected) {
-      log?.('Not connected yet.');
+      log?.("Not connected yet.");
       return;
     }
     if (gameState.roundComplete || gameState.board[index]) {
       return;
     }
     if (gameState.playerSymbol !== gameState.currentTurn) {
-      log?.(\"It's not your turn yet.\");
+      log?.("It's not your turn yet.");
       return;
     }
     playMove(index, gameState.playerSymbol, true);
@@ -172,11 +184,11 @@ export function createGameManager(dom, { log }) {
       gameState.winner = winner ?? null;
       gameState.roundComplete = true;
     } else {
-      gameState.currentTurn = symbol === 'X' ? 'O' : 'X';
+      gameState.currentTurn = symbol === "X" ? "O" : "X";
     }
     updateBoardUI();
     if (isLocal) {
-      outbound({ type: 'move', index, symbol });
+      outbound({ type: "move", index, symbol });
       if (gameState.roundComplete) {
         finalizeRound(winner ? { winner } : { draw: true });
       }
@@ -187,7 +199,7 @@ export function createGameManager(dom, { log }) {
     updateScoreboardForOutcome(outcome);
     updateScoreboardUI();
     updateRoundActionButton();
-    outbound({ type: 'roundComplete', outcome, session: sessionState });
+    outbound({ type: "roundComplete", outcome, session: sessionState });
   }
 
   function updateScoreboardForOutcome(outcome) {
@@ -203,47 +215,51 @@ export function createGameManager(dom, { log }) {
 
   function getRoleForSymbol(symbol) {
     if (symbol === sessionState.hostSymbol) {
-      return 'host';
+      return "host";
     }
     if (symbol === sessionState.guestSymbol) {
-      return 'guest';
+      return "guest";
     }
     return null;
   }
 
   function swapSessionSymbols() {
-    const nextHostSymbol = sessionState.hostSymbol === 'X' ? 'O' : 'X';
+    const nextHostSymbol = sessionState.hostSymbol === "X" ? "O" : "X";
     sessionState.hostSymbol = nextHostSymbol;
-    sessionState.guestSymbol = nextHostSymbol === 'X' ? 'O' : 'X';
+    sessionState.guestSymbol = nextHostSymbol === "X" ? "O" : "X";
     updatePlayerSymbol();
   }
 
-  function resetGame({ announce = true, sessionOverride = null, toggleSymbols = false } = {}) {
+  function resetGame({
+    announce = true,
+    sessionOverride = null,
+    toggleSymbols = false,
+  } = {}) {
     if (sessionOverride) {
       applySessionState(sessionOverride);
     } else if (toggleSymbols) {
       swapSessionSymbols();
     }
     gameState.board = Array(9).fill(null);
-    gameState.currentTurn = 'X';
+    gameState.currentTurn = "X";
     gameState.winner = null;
     gameState.roundComplete = false;
     updatePlayerSymbol();
     updateBoardUI();
     if (announce) {
-      outbound({ type: 'reset', session: sessionState });
+      outbound({ type: "reset", session: sessionState });
     }
   }
 
   function handleRemotePayload(payload) {
     switch (payload.type) {
-      case 'move':
+      case "move":
         playMove(payload.index, payload.symbol, false);
         break;
-      case 'reset':
+      case "reset":
         resetGame({ announce: false, sessionOverride: payload.session });
         break;
-      case 'roundComplete':
+      case "roundComplete":
         if (payload.session) {
           applySessionState(payload.session);
         }
@@ -252,7 +268,7 @@ export function createGameManager(dom, { log }) {
         updateBoardUI();
         updateRoundActionButton();
         break;
-      case 'sync':
+      case "sync":
         applySyncState(payload.state);
         break;
       default:
@@ -263,7 +279,7 @@ export function createGameManager(dom, { log }) {
   function applySyncState(state) {
     if (!state) return;
     gameState.board = state.board ?? Array(9).fill(null);
-    gameState.currentTurn = state.currentTurn ?? 'X';
+    gameState.currentTurn = state.currentTurn ?? "X";
     gameState.winner = state.winner ?? null;
     gameState.roundComplete = Boolean(state.roundComplete);
     applySessionState(state.session ?? sessionState);
@@ -272,7 +288,7 @@ export function createGameManager(dom, { log }) {
 
   function sendSyncState() {
     outbound({
-      type: 'sync',
+      type: "sync",
       state: {
         board: gameState.board,
         currentTurn: gameState.currentTurn,
@@ -291,13 +307,13 @@ export function createGameManager(dom, { log }) {
   }
 
   function initBoard() {
-    boardEl.innerHTML = '';
+    boardEl.innerHTML = "";
     gameState.board.forEach((_, index) => {
-      const cell = document.createElement('button');
-      cell.type = 'button';
-      cell.className = 'cell';
+      const cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = "cell";
       cell.dataset.cell = String(index);
-      cell.addEventListener('click', () => handleCellClick(index));
+      cell.addEventListener("click", () => handleCellClick(index));
       boardEl.appendChild(cell);
     });
   }
@@ -306,7 +322,7 @@ export function createGameManager(dom, { log }) {
     initBoard();
     resetGame({ announce: false });
     updateRoundActionButton();
-    resetGameBtn.addEventListener('click', () => {
+    resetGameBtn.addEventListener("click", () => {
       const shouldToggle = gameState.roundComplete;
       resetGame({ announce: true, toggleSymbols: shouldToggle });
     });
@@ -315,7 +331,10 @@ export function createGameManager(dom, { log }) {
   function checkWinner() {
     for (const [a, b, c] of winPatterns) {
       if (!gameState.board[a]) continue;
-      if (gameState.board[a] === gameState.board[b] && gameState.board[a] === gameState.board[c]) {
+      if (
+        gameState.board[a] === gameState.board[b] &&
+        gameState.board[a] === gameState.board[c]
+      ) {
         return gameState.board[a];
       }
     }

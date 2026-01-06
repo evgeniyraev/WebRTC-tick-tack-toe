@@ -1,148 +1,246 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WebRTC Tic-Tac-Toe</title>
-  <link rel="stylesheet" href="styles/global.css" />
-  <link rel="stylesheet" href="src/components/welcome/welcome.css" />
-  <link rel="stylesheet" href="src/components/wizard/wizard.css" />
-  <link rel="stylesheet" href="src/components/game/game.css" />
-</head>
-<body>
-  <header>
-    <h1>WebRTC Tic-Tac-Toe</h1>
-    <p>A tiny wizard helps you host or join a peer-to-peer match using WebRTC data channels. No servers - just exchange the generated text.</p>
-  </header>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>WebRTC Tic-Tac-Toe</title>
+        <link rel="stylesheet" href="styles/global.css" />
+        <link rel="stylesheet" href="src/components/welcome/welcome.css" />
+        <link rel="stylesheet" href="src/components/wizard/wizard.css" />
+        <link rel="stylesheet" href="src/components/game/game.css" />
+    </head>
+    <body>
+        <header>
+            <h1>WebRTC Tic-Tac-Toe</h1>
+            <p>
+                A tiny wizard helps you host or join a peer-to-peer match using
+                WebRTC data channels. No servers - just exchange the generated
+                text.
+            </p>
+        </header>
 
-  <main>
-    <section class="step active" data-step="1">
-      <div class="step-header">
-        <p class="eyebrow">Step 1</p>
-        <h2>How do you want to play?</h2>
-        <p>Invite someone and send them your offer, or paste an offer you already received.</p>
-      </div>
-      <div class="role-grid">
-        <article class="role-card">
-          <h3>Invite a friend</h3>
-          <p>You will host the match, create an offer, send it to your friend, and wait for their answer.</p>
-          <ul>
-            <li>You start first as <strong>X</strong>.</li>
-            <li>The game unlocks after your friend replies.</li>
-          </ul>
-          <button class="primary" data-role-select="host">Host &amp; create offer</button>
-        </article>
-        <article class="role-card">
-          <h3>Accept an invite</h3>
-          <p>Paste the host's offer, generate an answer, and send it back to lock in the connection.</p>
-          <ul>
-            <li>You play as <strong>O</strong>.</li>
-            <li>You'll see the board once the channel opens.</li>
-          </ul>
-          <button class="primary" data-role-select="guest">Join &amp; answer offer</button>
-        </article>
-      </div>
-    </section>
+        <main>
+            <section class="step active" data-step="1">
+                <div class="step-header">
+                    <p class="eyebrow">Step 1</p>
+                    <h2>How do you want to play?</h2>
+                    <p>
+                        Invite someone and send them your offer, or paste an
+                        offer you already received.
+                    </p>
+                </div>
+                <div class="role-grid">
+                    <article class="role-card">
+                        <h3>Invite a friend</h3>
+                        <p>
+                            You will host the match, create an offer, send it to
+                            your friend, and wait for their answer.
+                        </p>
+                        <ul>
+                            <li>You start first as <strong>X</strong>.</li>
+                            <li>The game unlocks after your friend replies.</li>
+                        </ul>
+                        <button class="primary" data-role-select="host">
+                            Host &amp; create offer
+                        </button>
+                    </article>
+                    <article class="role-card">
+                        <h3>Accept an invite</h3>
+                        <p>
+                            Paste the host's offer, generate an answer, and send
+                            it back to lock in the connection.
+                        </p>
+                        <ul>
+                            <li>You play as <strong>O</strong>.</li>
+                            <li>
+                                You'll see the board once the channel opens.
+                            </li>
+                        </ul>
+                        <button class="primary" data-role-select="guest">
+                            Join &amp; answer offer
+                        </button>
+                    </article>
+                </div>
+            </section>
 
-    <section class="step" data-step="2">
-      <div class="step-header">
-        <p class="eyebrow">Step 2</p>
-        <h2 id="connectionTitle">Connection setup</h2>
-        <p id="connectionSummary">Choose a role to see detailed instructions.</p>
-      </div>
-      <div class="role-note" data-role-visible="host">
-        <strong>Host flow:</strong> We generate the offer as soon as you choose this role. Copy &amp; share it, close the panel, then paste the guest answer to finalize.
-      </div>
-      <div class="role-note" data-role-visible="guest">
-        <strong>Guest flow:</strong> Paste the host offer, click "Generate answer" to build your response, then press "Copy answer" and share it back so the host can finalize.
-      </div>
-      <section class="connection host-flow" data-role-visible="host">
-        <div class="card" id="hostShareCard">
-          <h3>Share your offer</h3>
-          <p>We've generated your invitation. Copy the text below or tap Share to send it to your friend.</p>
-          <textarea id="hostOfferSdp" readonly placeholder="Generating offer..."></textarea>
-          <div class="button-row">
-            <button id="hostCopyOffer" class="primary" disabled>Copy offer</button>
-            <button id="hostSharedOffer" class="ghost" disabled>Share link</button>
-          </div>
-        </div>
-        <div class="card hidden" id="hostAwaitCard">
-          <h3>Paste guest answer</h3>
-          <p>Once they reply, paste their answer here and finalize the connection.</p>
-          <textarea id="hostAnswerSdp" placeholder="Waiting for guest answer..."></textarea>
-          <div class="button-row">
-            <button id="hostShowOfferAgain" class="ghost">Show my offer again</button>
-            <button id="finalizeConnection" class="primary" disabled>Finalize connection</button>
-          </div>
-        </div>
-      </section>
+            <section class="step" data-step="2">
+                <div class="step-header">
+                    <p class="eyebrow">Step 2</p>
+                    <h2 id="connectionTitle">Connection setup</h2>
+                    <p id="connectionSummary">
+                        Choose a role to see detailed instructions.
+                    </p>
+                </div>
+                <div class="role-note" data-role-visible="host">
+                    <strong>Host flow:</strong> We generate the offer as soon as
+                    you choose this role. Copy &amp; share it, close the panel,
+                    then paste the guest answer to finalize.
+                </div>
+                <div class="role-note" data-role-visible="guest">
+                    <strong>Guest flow:</strong> Paste the host offer, click
+                    "Generate answer" to build your response, then press "Copy
+                    answer" and share it back so the host can finalize.
+                </div>
+                <section class="connection host-flow" data-role-visible="host">
+                    <div class="card" id="hostShareCard">
+                        <h3>Share your offer</h3>
+                        <p>
+                            We've generated your invitation. Copy the text below
+                            or tap Share to send it to your friend.
+                        </p>
+                        <textarea
+                            id="hostOfferSdp"
+                            readonly
+                            placeholder="Generating offer..."
+                        ></textarea>
+                        <div class="button-row">
+                            <button id="hostCopyOffer" class="primary" disabled>
+                                Copy offer
+                            </button>
+                            <button id="hostSharedOffer" class="ghost" disabled>
+                                Share link
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card hidden" id="hostAwaitCard">
+                        <h3>Paste guest answer</h3>
+                        <p>
+                            Once they reply, paste their answer here and
+                            finalize the connection.
+                        </p>
+                        <textarea
+                            id="hostAnswerSdp"
+                            placeholder="Waiting for guest answer..."
+                        ></textarea>
+                        <div class="button-row">
+                            <button id="hostShowOfferAgain" class="ghost">
+                                Show my offer again
+                            </button>
+                            <button
+                                id="finalizeConnection"
+                                class="primary"
+                                disabled
+                            >
+                                Finalize connection
+                            </button>
+                        </div>
+                    </div>
+                </section>
 
-      <section class="connection guest-flow" data-role-visible="guest">
-        <div class="card" id="guestPasteCard">
-          <h3>Paste host offer</h3>
-          <p>Drop the text the host sent you. Then click the button to answer, copy, and connect.</p>
-          <textarea id="guestOfferSdp" placeholder="Paste host SDP offer here."></textarea>
-          <button id="guestAnswerButton" class="primary">Generate answer</button>
-        </div>
-        <div class="card hidden" id="guestAnswerCard">
-          <h3>Your answer</h3>
-          <p>Share this response with the host so they can finalize the match.</p>
-          <textarea id="guestAnswerSdp" readonly placeholder="Your answer will appear here."></textarea>
-          <button id="guestCopyAnswerButton" class="ghost">Copy answer</button>
-        </div>
-      </section>
+                <section
+                    class="connection guest-flow"
+                    data-role-visible="guest"
+                >
+                    <div class="card" id="guestPasteCard">
+                        <h3>Paste host offer</h3>
+                        <p>
+                            Drop the text the host sent you. Then click the
+                            button to answer, copy, and connect.
+                        </p>
+                        <textarea
+                            id="guestOfferSdp"
+                            placeholder="Paste host SDP offer here."
+                        ></textarea>
+                        <button id="guestAnswerButton" class="primary">
+                            Generate answer
+                        </button>
+                    </div>
+                    <div class="card hidden" id="guestAnswerCard">
+                        <h3>Your answer</h3>
+                        <p>
+                            Share this response with the host so they can
+                            finalize the match.
+                        </p>
+                        <textarea
+                            id="guestAnswerSdp"
+                            readonly
+                            placeholder="Your answer will appear here."
+                        ></textarea>
+                        <button id="guestCopyAnswerButton" class="ghost">
+                            Copy answer
+                        </button>
+                    </div>
+                </section>
 
-      <div class="card status-card">
-        <h3>Connection status</h3>
-        <p id="statusText">Waiting for action...</p>
-        <pre id="log"></pre>
-      </div>
+                <div class="card status-card">
+                    <h3>Connection status</h3>
+                    <p id="statusText">Waiting for action...</p>
+                    <pre id="log"></pre>
+                </div>
 
-      <p class="note">When the data channel opens, we switch to Step 3 automatically so you can start the match.</p>
-      <div class="wizard-actions">
-        <button id="backToRole" class="ghost">Back to role selection</button>
-      </div>
-    </section>
+                <p class="note">
+                    When the data channel opens, we switch to Step 3
+                    automatically so you can start the match.
+                </p>
+                <div class="wizard-actions">
+                    <button id="backToRole" class="ghost">
+                        Back to role selection
+                    </button>
+                </div>
+            </section>
 
-    <section class="step" data-step="3">
-      <div class="step-header">
-        <p class="eyebrow">Step 3</p>
-        <h2>Game on</h2>
-        <p>Take turns placing your marks. Moves stay synchronized through the data channel.</p>
-      </div>
-      <section class="game">
-        <div class="game-info">
-          <p><strong>You play as:</strong> <span id="playerSymbol">-</span></p>
-          <p><strong>Turn:</strong> <span id="turnIndicator">-</span></p>
-          <p><strong>Result:</strong> <span id="result">Game not started</span></p>
-          <div class="scoreboard">
-            <div class="score-block">
-              <p class="score-label" id="scoreYouLabel">You</p>
-              <p class="score-value" id="scoreYou">0</p>
-            </div>
-            <div class="score-block">
-              <p class="score-label" id="scoreOpponentLabel">Friend</p>
-              <p class="score-value" id="scoreOpponent">0</p>
-            </div>
-            <div class="score-block draws">
-              <p class="score-label">Draws</p>
-              <p class="score-value" id="scoreDraws">0</p>
-            </div>
-          </div>
-          <div class="game-actions">
-            <button id="resetGame" class="primary">Reset board</button>
-            <button id="endSession" class="ghost">End session</button>
-          </div>
-        </div>
-        <div class="board" id="board"></div>
-      </section>
-    </section>
-  </main>
+            <section class="step" data-step="3">
+                <div class="step-header">
+                    <p class="eyebrow">Step 3</p>
+                    <h2>Game on</h2>
+                    <p>
+                        Take turns placing your marks. Moves stay synchronized
+                        through the data channel.
+                    </p>
+                </div>
+                <section class="game">
+                    <div class="game-info">
+                        <p>
+                            <strong>You play as:</strong>
+                            <span id="playerSymbol">-</span>
+                        </p>
+                        <p>
+                            <strong>Turn:</strong>
+                            <span id="turnIndicator">-</span>
+                        </p>
+                        <p>
+                            <strong>Result:</strong>
+                            <span id="result">Game not started</span>
+                        </p>
+                        <div class="scoreboard">
+                            <div class="score-block">
+                                <p class="score-label" id="scoreYouLabel">
+                                    You
+                                </p>
+                                <p class="score-value" id="scoreYou">0</p>
+                            </div>
+                            <div class="score-block">
+                                <p class="score-label" id="scoreOpponentLabel">
+                                    Friend
+                                </p>
+                                <p class="score-value" id="scoreOpponent">0</p>
+                            </div>
+                            <div class="score-block draws">
+                                <p class="score-label">Draws</p>
+                                <p class="score-value" id="scoreDraws">0</p>
+                            </div>
+                        </div>
+                        <div class="game-actions">
+                            <button id="resetGame" class="primary">
+                                Reset board
+                            </button>
+                            <button id="endSession" class="ghost">
+                                End session
+                            </button>
+                        </div>
+                    </div>
+                    <div class="board" id="board"></div>
+                </section>
+            </section>
+        </main>
 
-  <footer>
-    <p>All data stays in your browsers. Refresh either side to start a brand new match.</p>
-  </footer>
+        <footer>
+            <p>
+                All data stays in your browsers. Refresh either side to start a
+                brand new match.
+            </p>
+        </footer>
 
-  <script src="src/main.js" type="module"></script>
-</body>
+        <script src="src/main.js" type="module"></script>
+    </body>
 </html>

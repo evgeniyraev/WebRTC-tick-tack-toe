@@ -1,106 +1,106 @@
 .step {
-  display: none;
-  background: var(--card-bg);
-  border-radius: 1rem;
-  padding: clamp(1.25rem, 4vw, 2rem);
-  border: 1px solid rgba(226, 232, 240, 0.08);
-  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.5);
+    display: none;
+    background: var(--card-bg);
+    border-radius: 1rem;
+    padding: clamp(1.25rem, 4vw, 2rem);
+    border: 1px solid rgba(226, 232, 240, 0.08);
+    box-shadow: 0 30px 60px rgba(15, 23, 42, 0.5);
 }
 
 .step.active {
-  display: block;
+    display: block;
 }
 
 .step-header {
-  margin-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
 }
 
 .eyebrow {
-  margin: 0 0 0.25rem;
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(226, 232, 240, 0.7);
+    margin: 0 0 0.25rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 240, 0.7);
 }
 
 .step h2 {
-  margin: 0 0 0.35rem;
-  font-size: clamp(1.5rem, 3vw, 2.2rem);
+    margin: 0 0 0.35rem;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
 }
 
 .step-header p {
-  margin: 0;
-  color: rgba(226, 232, 240, 0.9);
+    margin: 0;
+    color: rgba(226, 232, 240, 0.9);
 }
 
 .role-note {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px dashed rgba(226, 232, 240, 0.2);
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px dashed rgba(226, 232, 240, 0.2);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
 }
 
 .connection {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
 }
 
 .card {
-  background: rgba(15, 23, 42, 0.6);
-  border-radius: 1rem;
-  padding: 1rem;
-  border: 1px solid rgba(226, 232, 240, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 1rem;
+    padding: 1rem;
+    border: 1px solid rgba(226, 232, 240, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .card h3 {
-  margin: 0;
+    margin: 0;
 }
 
 .button-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .status-card {
-  min-height: 260px;
+    min-height: 260px;
 }
 
 #statusText {
-  font-weight: 600;
+    font-weight: 600;
 }
 
 #statusText.ready {
-  color: var(--success);
+    color: var(--success);
 }
 
 #statusText.error {
-  color: var(--danger);
+    color: var(--danger);
 }
 
 #log {
-  flex: 1;
-  margin: 0;
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  font-size: 0.85rem;
-  overflow: auto;
-  max-height: 160px;
+    flex: 1;
+    margin: 0;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+    overflow: auto;
+    max-height: 160px;
 }
 
 .note {
-  margin: 0.25rem 0 0.75rem;
-  color: rgba(226, 232, 240, 0.8);
+    margin: 0.25rem 0 0.75rem;
+    color: rgba(226, 232, 240, 0.8);
 }
 
 .wizard-actions {
-  display: flex;
-  justify-content: flex-end;
+    display: flex;
+    justify-content: flex-end;
 }

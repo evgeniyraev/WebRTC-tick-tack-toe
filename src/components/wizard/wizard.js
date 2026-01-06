@@ -1,8 +1,8 @@
 const config = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
-const SHARE_QUERY_KEY = 'offer';
+const SHARE_QUERY_KEY = "offer";
 
 export function createWizardApp(dom, { gameManager, log }) {
   const {
@@ -32,7 +32,7 @@ export function createWizardApp(dom, { gameManager, log }) {
   const wizardState = {
     role: null,
     step: 1,
-    hostPhase: 'share',
+    hostPhase: "share",
   };
 
   let pc = null;
@@ -40,17 +40,18 @@ export function createWizardApp(dom, { gameManager, log }) {
   let isOfferer = false;
 
   function logMessage(message) {
-    if (typeof log === 'function') {
+    if (typeof log === "function") {
       log(message);
       return;
     }
     const timestamp = new Date().toLocaleTimeString();
-    logEl.textContent = `[${timestamp}] ${message}\n` + logEl.textContent.slice(0, 1500);
+    logEl.textContent =
+      `[${timestamp}] ${message}\n` + logEl.textContent.slice(0, 1500);
   }
 
-  function setStatus(text, variant = '') {
+  function setStatus(text, variant = "") {
     statusText.textContent = text;
-    statusText.classList.remove('ready', 'error');
+    statusText.classList.remove("ready", "error");
     if (variant) {
       statusText.classList.add(variant);
     }
@@ -60,7 +61,7 @@ export function createWizardApp(dom, { gameManager, log }) {
     wizardState.step = step;
     steps.forEach((section) => {
       const sectionStep = Number(section.dataset.step);
-      section.classList.toggle('active', sectionStep === step);
+      section.classList.toggle("active", sectionStep === step);
     });
   }
 
@@ -70,30 +71,33 @@ export function createWizardApp(dom, { gameManager, log }) {
       if (!visibleFor) {
         return;
       }
-      element.classList.toggle('hidden', role !== visibleFor);
+      element.classList.toggle("hidden", role !== visibleFor);
     });
   }
 
   function configureRoleCopy(role) {
     if (!role) {
-      connectionTitle.textContent = 'Connection setup';
-      connectionSummary.textContent = 'Choose \"Invite a friend\" or \"Accept an invite\" to see step-by-step directions.';
+      connectionTitle.textContent = "Connection setup";
+      connectionSummary.textContent =
+        'Choose \"Invite a friend\" or \"Accept an invite\" to see step-by-step directions.';
       return;
     }
-    if (role === 'host') {
-      connectionTitle.textContent = 'Invite a friend';
-      connectionSummary.textContent = 'We generate an offer automatically. Copy it, share it, then paste the guest answer to finalize.';
+    if (role === "host") {
+      connectionTitle.textContent = "Invite a friend";
+      connectionSummary.textContent =
+        "We generate an offer automatically. Copy it, share it, then paste the guest answer to finalize.";
     } else {
-      connectionTitle.textContent = 'Accept an invite';
-      connectionSummary.textContent = 'Paste the host offer, generate an answer, copy it, and send it back so they can finalize.';
+      connectionTitle.textContent = "Accept an invite";
+      connectionSummary.textContent =
+        "Paste the host offer, generate an answer, copy it, and send it back so they can finalize.";
     }
   }
 
   function showHostShareCard() {
-    wizardState.hostPhase = 'share';
-    hostShareCard.classList.remove('hidden');
-    hostAwaitCard.classList.add('hidden');
-    hostAnswerSdpEl.value = '';
+    wizardState.hostPhase = "share";
+    hostShareCard.classList.remove("hidden");
+    hostAwaitCard.classList.add("hidden");
+    hostAnswerSdpEl.value = "";
     finalizeBtn.disabled = true;
     const hasOffer = Boolean(hostOfferSdpEl.value.trim());
     hostCopyOfferBtn.disabled = !hasOffer;
@@ -101,41 +105,41 @@ export function createWizardApp(dom, { gameManager, log }) {
   }
 
   function showHostAwaitCard() {
-    wizardState.hostPhase = 'awaitAnswer';
-    hostShareCard.classList.add('hidden');
-    hostAwaitCard.classList.remove('hidden');
+    wizardState.hostPhase = "awaitAnswer";
+    hostShareCard.classList.add("hidden");
+    hostAwaitCard.classList.remove("hidden");
     hostAnswerSdpEl.focus();
     updateFinalizeAvailability();
   }
 
   function toggleGuestAnswerCard(show) {
     if (show) {
-      guestAnswerCard.classList.remove('hidden');
+      guestAnswerCard.classList.remove("hidden");
       guestCopyAnswerButton.disabled = false;
     } else {
-      guestAnswerCard.classList.add('hidden');
-      guestAnswerSdpEl.value = '';
+      guestAnswerCard.classList.add("hidden");
+      guestAnswerSdpEl.value = "";
       guestCopyAnswerButton.disabled = true;
     }
   }
 
   function selectRole(role) {
     wizardState.role = role;
-    isOfferer = role === 'host';
+    isOfferer = role === "host";
     gameManager.setRole(role);
     toggleRoleViews(role);
     configureRoleCopy(role);
     clearLog();
     gameManager.resetGame({ announce: false });
-    if (role === 'host') {
-      hostOfferSdpEl.placeholder = 'Generating offer...';
+    if (role === "host") {
+      hostOfferSdpEl.placeholder = "Generating offer...";
       hostCopyOfferBtn.disabled = true;
       hostSharedOfferBtn.disabled = true;
       showHostShareCard();
-      setStatus('Generating offer...');
+      setStatus("Generating offer...");
       createOffer();
     } else {
-      guestOfferSdpEl.value = '';
+      guestOfferSdpEl.value = "";
       toggleGuestAnswerCard(false);
       setStatus('Paste the host offer and click \"Generate answer\".');
     }
@@ -144,7 +148,7 @@ export function createWizardApp(dom, { gameManager, log }) {
 
   function clearLog() {
     if (logEl) {
-      logEl.textContent = '';
+      logEl.textContent = "";
     }
   }
 
@@ -154,15 +158,15 @@ export function createWizardApp(dom, { gameManager, log }) {
     toggleRoleViews(null);
     configureRoleCopy(null);
     clearLog();
-    hostOfferSdpEl.value = '';
-    hostAnswerSdpEl.value = '';
-    guestOfferSdpEl.value = '';
-    guestAnswerSdpEl.value = '';
+    hostOfferSdpEl.value = "";
+    hostAnswerSdpEl.value = "";
+    guestOfferSdpEl.value = "";
+    guestAnswerSdpEl.value = "";
     showHostShareCard();
     toggleGuestAnswerCard(false);
     hostCopyOfferBtn.disabled = true;
     hostSharedOfferBtn.disabled = true;
-    setStatus('Waiting for action...');
+    setStatus("Waiting for action...");
     gameManager.resetSession();
     closePeerConnection();
     goToStep(1);
@@ -190,7 +194,12 @@ export function createWizardApp(dom, { gameManager, log }) {
 
   function ensureRole(requiredRole) {
     if (wizardState.role !== requiredRole) {
-      setStatus(requiredRole === 'host' ? 'Choose \"Invite a friend\" first.' : 'Choose \"Accept an invite\" first.', 'error');
+      setStatus(
+        requiredRole === "host"
+          ? 'Choose \"Invite a friend\" first.'
+          : 'Choose \"Accept an invite\" first.',
+        "error",
+      );
       return false;
     }
     return true;
@@ -204,8 +213,11 @@ export function createWizardApp(dom, { gameManager, log }) {
     };
     pc.onconnectionstatechange = () => {
       logMessage(`Connection state: ${pc.connectionState}`);
-      if (pc.connectionState === 'failed') {
-        setStatus('Connection failed. Try resetting and starting again.', 'error');
+      if (pc.connectionState === "failed") {
+        setStatus(
+          "Connection failed. Try resetting and starting again.",
+          "error",
+        );
         closePeerConnection();
         if (wizardState.role) {
           goToStep(2);
@@ -217,7 +229,7 @@ export function createWizardApp(dom, { gameManager, log }) {
         return;
       }
       if (pc.localDescription) {
-        if (wizardState.role === 'host') {
+        if (wizardState.role === "host") {
           hostOfferSdpEl.value = JSON.stringify(pc.localDescription);
         } else {
           guestAnswerSdpEl.value = JSON.stringify(pc.localDescription);
@@ -225,12 +237,12 @@ export function createWizardApp(dom, { gameManager, log }) {
       }
     };
     pc.ondatachannel = (event) => {
-      logMessage('Received data channel from remote peer');
+      logMessage("Received data channel from remote peer");
       attachDataChannel(event.channel);
     };
 
     if (createDataChannel) {
-      const channel = pc.createDataChannel('ttt-data', { ordered: true });
+      const channel = pc.createDataChannel("ttt-data", { ordered: true });
       attachDataChannel(channel);
     }
   }
@@ -238,15 +250,15 @@ export function createWizardApp(dom, { gameManager, log }) {
   function attachDataChannel(channel) {
     dataChannel = channel;
     dataChannel.onopen = () => {
-      logMessage('Data channel open');
+      logMessage("Data channel open");
       gameManager.setConnectionState(true);
-      setStatus('Connected! Start playing.', 'ready');
+      setStatus("Connected! Start playing.", "ready");
       gameManager.sendSyncState();
       goToStep(3);
     };
     dataChannel.onclose = () => {
-      logMessage('Data channel closed');
-      setStatus('Connection closed', 'error');
+      logMessage("Data channel closed");
+      setStatus("Connection closed", "error");
       gameManager.setConnectionState(false);
       if (wizardState.role) {
         goToStep(2);
@@ -254,20 +266,20 @@ export function createWizardApp(dom, { gameManager, log }) {
     };
     dataChannel.onerror = (event) => {
       console.error(event);
-      logMessage('Data channel error');
+      logMessage("Data channel error");
     };
     dataChannel.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
         gameManager.handleRemotePayload(payload);
       } catch (error) {
-        console.error('Failed to parse message', error);
+        console.error("Failed to parse message", error);
       }
     };
   }
 
   function sendMessage(payload) {
-    if (!dataChannel || dataChannel.readyState !== 'open') {
+    if (!dataChannel || dataChannel.readyState !== "open") {
       return;
     }
     dataChannel.send(JSON.stringify(payload));
@@ -281,7 +293,7 @@ export function createWizardApp(dom, { gameManager, log }) {
       return navigator.clipboard
         .writeText(text)
         .then(() => {
-          logMessage('Copied to clipboard');
+          logMessage("Copied to clipboard");
           return true;
         })
         .catch(() => fallbackCopyText(text));
@@ -290,38 +302,38 @@ export function createWizardApp(dom, { gameManager, log }) {
   }
 
   function fallbackCopyText(text) {
-    const temp = document.createElement('textarea');
+    const temp = document.createElement("textarea");
     temp.value = text;
-    temp.setAttribute('readonly', '');
-    temp.style.position = 'fixed';
-    temp.style.top = '-1000px';
+    temp.setAttribute("readonly", "");
+    temp.style.position = "fixed";
+    temp.style.top = "-1000px";
     document.body.appendChild(temp);
     temp.select();
     temp.setSelectionRange(0, temp.value.length);
     let succeeded = false;
     try {
-      succeeded = document.execCommand('copy');
+      succeeded = document.execCommand("copy");
     } catch (error) {
-      console.error('execCommand copy failed', error);
+      console.error("execCommand copy failed", error);
     }
     document.body.removeChild(temp);
     if (succeeded) {
-      logMessage('Copied to clipboard');
+      logMessage("Copied to clipboard");
     } else {
-      logMessage('Clipboard copy failed');
+      logMessage("Clipboard copy failed");
     }
     return succeeded;
   }
 
   async function createOffer() {
-    if (!ensureRole('host')) {
+    if (!ensureRole("host")) {
       return;
     }
     isOfferer = true;
     resetPeerConnection({ createDataChannel: true });
-    hostAnswerSdpEl.value = '';
+    hostAnswerSdpEl.value = "";
     gameManager.resetGame({ announce: false });
-    setStatus('Generating offer...');
+    setStatus("Generating offer...");
     try {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -329,23 +341,25 @@ export function createWizardApp(dom, { gameManager, log }) {
       hostOfferSdpEl.value = JSON.stringify(pc.localDescription);
       hostCopyOfferBtn.disabled = false;
       hostSharedOfferBtn.disabled = false;
-      hostOfferSdpEl.placeholder = 'Copy and share this text.';
-      setStatus('Copy the offer or tap \"Share link\", then wait for the guest to respond.');
-      logMessage('Offer ready. Send it to the other player.');
+      hostOfferSdpEl.placeholder = "Copy and share this text.";
+      setStatus(
+        'Copy the offer or tap \"Share link\", then wait for the guest to respond.',
+      );
+      logMessage("Offer ready. Send it to the other player.");
     } catch (error) {
       console.error(error);
-      setStatus('Failed to create offer', 'error');
+      setStatus("Failed to create offer", "error");
     }
   }
 
   async function answerAndConnect() {
-    if (!ensureRole('guest')) {
+    if (!ensureRole("guest")) {
       return null;
     }
     const raw = guestOfferSdpEl.value;
     const remoteDescription = raw.trim();
     if (!remoteDescription) {
-      setStatus('Paste the remote offer first.', 'error');
+      setStatus("Paste the remote offer first.", "error");
       return null;
     }
     try {
@@ -353,9 +367,9 @@ export function createWizardApp(dom, { gameManager, log }) {
       isOfferer = false;
       resetPeerConnection({ createDataChannel: false });
       guestOfferSdpEl.value = raw;
-      guestAnswerSdpEl.value = '';
+      guestAnswerSdpEl.value = "";
       gameManager.resetGame({ announce: false });
-      setStatus('Connecting... setting remote offer.');
+      setStatus("Connecting... setting remote offer.");
       await pc.setRemoteDescription(offer);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
@@ -363,39 +377,42 @@ export function createWizardApp(dom, { gameManager, log }) {
       const description = JSON.stringify(pc.localDescription);
       guestAnswerSdpEl.value = description;
       toggleGuestAnswerCard(true);
-      logMessage('Answer created. Send it back to finish setup.');
+      logMessage("Answer created. Send it back to finish setup.");
       setStatus('Answer ready. Use \"Copy answer\" and send it to the host.');
       return description;
     } catch (error) {
       console.error(error);
-      setStatus('Could not process offer. Check the text and try again.', 'error');
+      setStatus(
+        "Could not process offer. Check the text and try again.",
+        "error",
+      );
       return null;
     }
   }
 
   async function finalizeConnection() {
-    if (!ensureRole('host')) {
+    if (!ensureRole("host")) {
       return;
     }
     const remoteDescription = hostAnswerSdpEl.value.trim();
     if (!remoteDescription) {
-      setStatus('Paste the answer before finalizing.', 'error');
+      setStatus("Paste the answer before finalizing.", "error");
       return;
     }
     if (!pc) {
-      setStatus('Create an offer first.', 'error');
+      setStatus("Create an offer first.", "error");
       return;
     }
     try {
       const answer = JSON.parse(remoteDescription);
       await pc.setRemoteDescription(answer);
-      setStatus('Waiting for data channel to open...');
-      hostAnswerSdpEl.value = '';
+      setStatus("Waiting for data channel to open...");
+      hostAnswerSdpEl.value = "";
       updateFinalizeAvailability();
-      logMessage('Remote answer set. Waiting for channel.');
+      logMessage("Remote answer set. Waiting for channel.");
     } catch (error) {
       console.error(error);
-      setStatus('Failed to apply remote answer.', 'error');
+      setStatus("Failed to apply remote answer.", "error");
     }
   }
 
@@ -407,21 +424,23 @@ export function createWizardApp(dom, { gameManager, log }) {
   function handleShareLink() {
     const offer = hostOfferSdpEl.value.trim();
     if (!offer) {
-      setStatus('Offer not ready yet. Wait a second and try again.', 'error');
+      setStatus("Offer not ready yet. Wait a second and try again.", "error");
       return;
     }
     const shareUrl = buildShareUrl(offer);
     if (navigator.share) {
       navigator
         .share({
-          title: 'WebRTC Tic-Tac-Toe invite',
-          text: 'Join my tic-tac-toe match via WebRTC.',
+          title: "WebRTC Tic-Tac-Toe invite",
+          text: "Join my tic-tac-toe match via WebRTC.",
           url: shareUrl,
         })
         .then(() => {
-          logMessage('Shared invite link via Web Share API');
+          logMessage("Shared invite link via Web Share API");
           showHostAwaitCard();
-          setStatus(\"Shared the invite! Paste your friend's answer when it arrives.\");
+          setStatus(
+            "Shared the invite! Paste your friend's answer when it arrives.",
+          );
         })
         .catch(() => {
           copyShareLink(shareUrl);
@@ -434,10 +453,15 @@ export function createWizardApp(dom, { gameManager, log }) {
   async function copyShareLink(url) {
     const copied = await copyTextToClipboard(url);
     if (copied) {
-      setStatus('Share link copied! Send it to your friend and wait for their answer.');
+      setStatus(
+        "Share link copied! Send it to your friend and wait for their answer.",
+      );
       showHostAwaitCard();
     } else {
-      setStatus('Could not copy the share link. Copy it manually from the page.', 'error');
+      setStatus(
+        "Could not copy the share link. Copy it manually from the page.",
+        "error",
+      );
     }
   }
 
@@ -448,27 +472,32 @@ export function createWizardApp(dom, { gameManager, log }) {
   }
 
   function setupEventListeners() {
-    hostCopyOfferBtn.addEventListener('click', async () => {
+    hostCopyOfferBtn.addEventListener("click", async () => {
       const copied = await copyTextToClipboard(hostOfferSdpEl.value);
       if (copied) {
         showHostAwaitCard();
-        setStatus(\"Offer copied! Waiting for your friend's answer.\");
+        setStatus("Offer copied! Waiting for your friend's answer.");
       } else {
-        setStatus('Copy failed. Try again once the offer finishes generating.', 'error');
+        setStatus(
+          "Copy failed. Try again once the offer finishes generating.",
+          "error",
+        );
       }
     });
-    hostSharedOfferBtn.addEventListener('click', () => {
+    hostSharedOfferBtn.addEventListener("click", () => {
       handleShareLink();
     });
-    hostShowOfferAgainBtn.addEventListener('click', () => {
+    hostShowOfferAgainBtn.addEventListener("click", () => {
       showHostShareCard();
-      setStatus('Copy and share your offer again if needed.');
+      setStatus("Copy and share your offer again if needed.");
     });
-    hostAnswerSdpEl.addEventListener('input', () => updateFinalizeAvailability());
-    finalizeBtn.addEventListener('click', () => finalizeConnection());
-    guestAnswerButton.addEventListener('click', async () => {
+    hostAnswerSdpEl.addEventListener("input", () =>
+      updateFinalizeAvailability(),
+    );
+    finalizeBtn.addEventListener("click", () => finalizeConnection());
+    guestAnswerButton.addEventListener("click", async () => {
       if (!guestOfferSdpEl.value.trim()) {
-        setStatus('Paste the host offer first.', 'error');
+        setStatus("Paste the host offer first.", "error");
         return;
       }
       guestAnswerButton.disabled = true;
@@ -478,47 +507,49 @@ export function createWizardApp(dom, { gameManager, log }) {
         guestAnswerButton.disabled = false;
       }
     });
-    guestCopyAnswerButton.addEventListener('click', async () => {
+    guestCopyAnswerButton.addEventListener("click", async () => {
       const copied = await copyTextToClipboard(guestAnswerSdpEl.value);
       if (copied) {
-        setStatus('Answer copied! Share it with the host.');
+        setStatus("Answer copied! Share it with the host.");
       } else {
-        setStatus('Copy failed. Try again after focusing the page.', 'error');
+        setStatus("Copy failed. Try again after focusing the page.", "error");
       }
     });
-    backToRoleBtn.addEventListener('click', () => returnToRoleSelection());
-    endSessionBtn.addEventListener('click', () => returnToRoleSelection());
+    backToRoleBtn.addEventListener("click", () => returnToRoleSelection());
+    endSessionBtn.addEventListener("click", () => returnToRoleSelection());
   }
 
   function prefillOfferFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const sharedOffer = params.get(SHARE_QUERY_KEY);
     if (sharedOffer) {
-      selectRole('guest');
+      selectRole("guest");
       guestOfferSdpEl.value = sharedOffer;
-      setStatus('Invite detected. Review the offer and click \"Generate answer\".');
+      setStatus(
+        'Invite detected. Review the offer and click \"Generate answer\".',
+      );
       guestOfferSdpEl.focus();
       try {
-        const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.hash || ''}`;
+        const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.hash || ""}`;
         window.history.replaceState({}, document.title, cleanUrl);
       } catch (error) {
-        console.warn('Unable to clean URL params', error);
+        console.warn("Unable to clean URL params", error);
       }
     }
   }
 
   async function waitForIceGathering(connection) {
-    if (connection.iceGatheringState === 'complete') {
+    if (connection.iceGatheringState === "complete") {
       return;
     }
     await new Promise((resolve) => {
       const checkState = () => {
-        if (connection.iceGatheringState === 'complete') {
-          connection.removeEventListener('icegatheringstatechange', checkState);
+        if (connection.iceGatheringState === "complete") {
+          connection.removeEventListener("icegatheringstatechange", checkState);
           resolve();
         }
       };
-      connection.addEventListener('icegatheringstatechange', checkState);
+      connection.addEventListener("icegatheringstatechange", checkState);
     });
   }
 
@@ -528,8 +559,8 @@ export function createWizardApp(dom, { gameManager, log }) {
     showHostShareCard();
     toggleGuestAnswerCard(false);
     goToStep(1);
-    setStatus('Waiting for action...');
-    window.addEventListener('beforeunload', () => closePeerConnection());
+    setStatus("Waiting for action...");
+    window.addEventListener("beforeunload", () => closePeerConnection());
   }
 
   init();
